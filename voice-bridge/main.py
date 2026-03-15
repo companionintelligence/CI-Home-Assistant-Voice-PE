@@ -67,10 +67,6 @@ async def handle_connection(ws: WebSocketServerProtocol, path: str) -> None:
                     vad.reset()
                     logger.info("Audio stream started, rate=%d", sample_rate)
 
-                elif msg.type == "audio-chunk" and msg.payload:
-                    ring_buf.push(msg.payload)
-                    vad.process(msg.payload)
-
                 elif msg.type == "audio-stop":
                     # Explicit stream end → flush whatever we have
                     if not ring_buf.is_empty:
