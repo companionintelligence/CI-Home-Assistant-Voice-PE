@@ -40,6 +40,13 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       }
     }, config.sseHeartbeatIntervalMs);
 
+    const cleanup = () => {
+      clearInterval(heartbeat);
+    };
+
+    req.once('close', cleanup);
+    res.once('close', cleanup);
+
     const sendEvent = (event: Record<string, unknown>) => {
       if (!res.writableEnded) {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
