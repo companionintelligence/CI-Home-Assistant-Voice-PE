@@ -88,22 +88,26 @@ async def stream_responses(
             headers=_headers(),
         ) as resp:
             resp.raise_for_status()
-            async for line in resp.content:
-                decoded = line.decode("utf-8").strip()
-                if not decoded or decoded.startswith(":"):
-                    continue
-                if decoded.startswith("data: "):
-                    raw = decoded[6:]
-                    if raw == "[DONE]":
-                        return
-                    try:
-                        event = json.loads(raw)
-                        if event.get("type") == "response.output_text.delta":
-                            delta = event.get("delta", "")
-                            if delta:
-                                yield delta
-                    except json.JSONDecodeError:
-                        pass
+            buf = b""
+            async for chunk in resp.content.iter_any():
+                buf += chunk
+                while b"\n" in buf:
+                    raw_line, buf = buf.split(b"\n", 1)
+                    decoded = raw_line.decode("utf-8").strip()
+                    if not decoded or decoded.startswith(":"):
+                        continue
+                    if decoded.startswith("data: "):
+                        raw = decoded[6:]
+                        if raw == "[DONE]":
+                            return
+                        try:
+                            event = json.loads(raw)
+                            if event.get("type") == "response.output_text.delta":
+                                delta = event.get("delta", "")
+                                if delta:
+                                    yield delta
+                        except json.JSONDecodeError:
+                            pass
 
 
 async def synthesize_speech(
