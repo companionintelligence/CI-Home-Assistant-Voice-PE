@@ -2,6 +2,7 @@
 -- Run with: psql $DATABASE_URL -f 001_initial.sql
 
 BEGIN;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Tenants (one per Home Assistant instance / organization)
 CREATE TABLE IF NOT EXISTS tenants (
