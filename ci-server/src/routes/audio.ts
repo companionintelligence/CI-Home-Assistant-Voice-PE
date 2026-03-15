@@ -47,7 +47,7 @@ router.post(
           filename: req.file.originalname || 'audio.wav',
           contentType: req.file.mimetype,
         });
-        form.append('model', 'whisper-1');
+        form.append('model', model);
         if (language) form.append('language', language);
 
         const upstream = await axios.post(
