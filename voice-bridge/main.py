@@ -41,7 +41,6 @@ async def handle_connection(ws: WebSocketServerProtocol, path: str) -> None:
 
     ring_buf = RingBuffer()
     vad = VoiceActivityDetector()
-    previous_response_id: str | None = None
     sample_rate = SAMPLE_RATE
 
     try:
@@ -56,7 +55,7 @@ async def handle_connection(ws: WebSocketServerProtocol, path: str) -> None:
                     frames = ring_buf.drain()
                     vad.reset()
                     logger.debug("VAD end: %d frames captured", len(frames))
-                    await _process_utterance(ws, frames, sample_rate, previous_response_id)
+                    await _process_utterance(ws, frames, sample_rate, None)
 
             elif isinstance(raw, str):
                 msg = WyomingMessage.from_json(raw)
@@ -78,7 +77,7 @@ async def handle_connection(ws: WebSocketServerProtocol, path: str) -> None:
                         frames = ring_buf.drain()
                         vad.reset()
                         logger.debug("audio-stop: flushing %d frames", len(frames))
-                        await _process_utterance(ws, frames, sample_rate, previous_response_id)
+                        await _process_utterance(ws, frames, sample_rate, None)
 
     except websockets.exceptions.ConnectionClosed:
         logger.info("Wyoming connection closed")
