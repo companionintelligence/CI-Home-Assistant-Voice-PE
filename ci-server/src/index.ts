@@ -2,6 +2,15 @@ import { createApp } from './app';
 import { config } from './config';
 import { logger } from './logger';
 
+// Fail closed: without a master key every /v1 request is refused with 503.
+// Say so loudly at boot rather than letting the operator discover it request
+// by request.
+if (!config.masterApiKey) {
+  logger.error(
+    'MASTER_API_KEY is not set – all /v1 endpoints will refuse requests. Set MASTER_API_KEY (see .env.example) before serving traffic.'
+  );
+}
+
 const app = createApp();
 
 const server = app.listen(config.port, () => {

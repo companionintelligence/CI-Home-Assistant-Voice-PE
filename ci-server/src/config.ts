@@ -22,7 +22,9 @@ export const config = {
   vllmBaseUrl: process.env.VLLM_BASE_URL || '',
 
   // Auth
-  masterApiKey: process.env.MASTER_API_KEY || 'dev-key-change-me',
+  // No fallback on purpose: when MASTER_API_KEY is unset, authMiddleware
+  // rejects every request rather than accepting a well-known default key.
+  masterApiKey: process.env.MASTER_API_KEY || '',
   jwtSecret: process.env.JWT_SECRET || 'change-me-in-production',
 
   // Rate limiting

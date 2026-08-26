@@ -72,7 +72,9 @@ Voice Bridge (Python)   ←→   ci-server (Node.js / TypeScript)
 
 ```bash
 cp .env.example .env
-# Edit .env – at minimum set MASTER_API_KEY
+# Edit .env – MASTER_API_KEY is REQUIRED (docker compose will refuse to start
+# without it, and ci-server refuses every /v1 request without it).
+# Generate one with: openssl rand -hex 32
 ```
 
 ### 2. Start the full stack
@@ -97,7 +99,7 @@ curl http://localhost:8080/health
 # {"status":"ok","version":"1.0.0"}
 
 curl http://localhost:8080/v1/models \
-  -H "Authorization: Bearer change-me-in-production"
+  -H "Authorization: Bearer $MASTER_API_KEY"
 ```
 
 ### 4. Connect Home Assistant
@@ -123,6 +125,30 @@ All endpoints follow the OpenAI API specification.
 ```
 Authorization: Bearer <MASTER_API_KEY>
 ```
+
+Every `/v1` endpoint requires the bearer token to match `MASTER_API_KEY`
+**in every environment**. There is no `NODE_ENV` carve-out and no development
+bypass: if `MASTER_API_KEY` is unset, ci-server fails closed and refuses every
+`/v1` request with `503 auth_not_configured` rather than letting it through.
+The token is compared in constant time.
+
+| Condition | Response |
+|-----------|----------|
+| No `Authorization` header, or not `Bearer …` | `401 invalid_api_key` |
+| Bearer token empty or wrong | `401 invalid_api_key` |
+| `MASTER_API_KEY` not configured on the server | `503 auth_not_configured` |
+
+> **⚠️ BREAKING CHANGE.** ci-server previously validated the bearer token *only*
+> when `NODE_ENV=production`; anywhere else — staging, development, tests,
+> a docker-compose or self-hosted appliance that never set `NODE_ENV` — any
+> non-empty bearer token was accepted, so those deployments were effectively
+> unauthenticated. `MASTER_API_KEY` also silently defaulted to
+> `dev-key-change-me`, so even a production box that forgot to set it was
+> guarded by a value published in this README.
+>
+> To upgrade: set `MASTER_API_KEY` on ci-server and the identical value as
+> `CI_SERVER_API_KEY` on voice-bridge (docker-compose now refuses to start
+> without it), and update any client that was sending an arbitrary token.
 
 ### Endpoints
 
@@ -155,7 +181,7 @@ data: {"type":"response.completed","response":{"id":"resp_abc","status":"complet
 
 ```bash
 curl http://localhost:8080/v1/chat/completions \
-  -H "Authorization: Bearer change-me-in-production" \
+  -H "Authorization: Bearer $MASTER_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "ollama:llama2",
@@ -171,7 +197,7 @@ curl http://localhost:8080/v1/chat/completions \
 
 ```bash
 curl http://localhost:8080/v1/audio/transcriptions \
-  -H "Authorization: Bearer change-me-in-production" \
+  -H "Authorization: Bearer $MASTER_API_KEY" \
   -F file=@command.wav \
   -F model=whisper-1
 ```
@@ -183,10 +209,14 @@ curl http://localhost:8080/v1/audio/transcriptions \
 ```bash
 cd ci-server
 npm install
-npm test        # Jest tests
+npm test        # Jest tests (tests/setup-env.ts supplies a MASTER_API_KEY)
 npm run build   # TypeScript compile
-npm run dev     # ts-node development server
+MASTER_API_KEY=dev-only-local-key npm run dev  # ts-node development server
 ```
+
+`npm run dev` needs `MASTER_API_KEY` like any other environment – auth is not
+relaxed for local development. Put it in `.env` (loaded by dotenv) so you do
+not have to repeat it.
 
 ### voice-bridge (Python)
 
@@ -206,10 +236,10 @@ python main.py  # development server
 | `REDIS_URL` | `redis://localhost:6379` | Redis connection string |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
 | `OPENAI_API_KEY` | _(empty)_ | OpenAI API key (optional fallback) |
-| `MASTER_API_KEY` | `dev-key-change-me` | Bearer token for API auth |
+| `MASTER_API_KEY` | _(required)_ | Bearer token for API auth – unset means every `/v1` request is refused |
 | `CORS_ORIGINS` | `*` | Comma-separated CORS origins |
 | `CI_SERVER_URL` | `http://localhost:8080` | ci-server URL (voice-bridge) |
-| `CI_SERVER_API_KEY` | `dev-key-change-me` | API key (voice-bridge) |
+| `CI_SERVER_API_KEY` | _(required)_ | API key (voice-bridge) – must equal `MASTER_API_KEY` |
 | `CI_MODEL` | `ollama:llama2` | LLM model to use |
 | `VOICE_BRIDGE_PORT` | `10700` | Wyoming WebSocket port |
 | `SAMPLE_RATE` | `16000` | Audio sample rate (Hz) |
