@@ -3,16 +3,27 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 from typing import AsyncIterator, Optional
 
 import aiohttp
 
+logger = logging.getLogger("voice-bridge.ci-client")
+
 CI_SERVER_URL = os.environ.get("CI_SERVER_URL", "http://localhost:8080")
-CI_SERVER_API_KEY = os.environ.get("CI_SERVER_API_KEY", "dev-key-change-me")
+# No default key: ci-server enforces the master key in every environment, so a
+# placeholder here would only turn a config error into a confusing 401 loop.
+CI_SERVER_API_KEY = os.environ.get("CI_SERVER_API_KEY", "")
 DEFAULT_MODEL = os.environ.get("CI_MODEL", "ollama:llama2")
 DEFAULT_TTS_MODEL = os.environ.get("CI_TTS_MODEL", "tts-1")
 DEFAULT_TTS_VOICE = os.environ.get("CI_TTS_VOICE", "alloy")
+
+if not CI_SERVER_API_KEY:
+    logger.warning(
+        "CI_SERVER_API_KEY is not set - every ci-server call will be rejected. "
+        "Set it to the same value as ci-server's MASTER_API_KEY."
+    )
 
 
 def _headers() -> dict[str, str]:

@@ -2,6 +2,8 @@ import request from 'supertest';
 import { createApp } from '../src/app';
 
 const app = createApp();
+// Must match the MASTER_API_KEY set in tests/setup-env.ts – auth is enforced
+// in every environment, so these requests are really authenticated.
 const AUTH = { Authorization: 'Bearer test-key' };
 
 describe('GET /health', () => {
