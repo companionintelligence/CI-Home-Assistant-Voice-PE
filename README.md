@@ -1,258 +1,213 @@
 # CI-Home-Assistant-Voice-PE
 
-**Home Assistant Voice PE ↔ ci-server/Ollama via OpenAI-Compatible API**
+**Companion Voice for Home Assistant.** Connects the
+[Home Assistant Voice Preview Edition](https://www.home-assistant.io/voice-pe/)
+to a self-hosted Companion: a local LLM through Ollama, local or cloud speech,
+and your [Companion Memory](https://github.com/companionintelligence/CI-Server).
 
-This repository implements a complete voice assistant pipeline connecting the
-[Home Assistant Voice Preview Edition (Voice PE)](https://www.home-assistant.io/voice_control/voice_remote_local_assistant/)
-device to a self-hosted **OpenAI-compatible façade** (ci-server) backed by a local
-[Ollama](https://ollama.ai/) LLM.
+Setup guide and config generator: **https://ha.ci.computer** (source in [`web/`](web/)).
 
-```
-Voice PE (ESP32-S3 + XMOS)
-    │  Wyoming WebSocket (audio PCM)
-    ▼
-Voice Bridge (Python)   ←→   ci-server (Node.js / TypeScript)
-    │  VAD buffering               │  /v1/models
-    │  PCM → WAV                   │  /v1/chat/completions  (SSE)
-    │                              │  /v1/responses         (SSE)
-    │  POST /v1/audio/transcriptions│  /v1/audio/transcriptions
-    │  POST /v1/responses (stream)  │  /v1/audio/speech
-    │  POST /v1/audio/speech        │
-    ▼                              ▼
- Transcript / TTS audio        Ollama  (local LLM)
- sent back to HA               PostgreSQL + Redis (store)
+```mermaid
+flowchart LR
+  PE["Voice PE<br/>wake word, mics, speaker"] --> HA["Home Assistant Assist"]
+  HA -- "Wyoming TCP :10700" --> VB["voice-bridge<br/>(Python)"]
+  VB -- "HTTP :8080" --> CS["ci-server<br/>OpenAI-compatible facade (Node)"]
+  CS --> OL["Ollama / vLLM / OpenAI"]
+  CS --> SP["speech server<br/>speaches, Hub, OpenAI"]
+  CS <--> CM["Companion Memory<br/>/memory/context, recall, turn"]
 ```
 
-## Repository Structure
+The bridge is a [Wyoming](https://github.com/rhasspy/wyoming) server. Home
+Assistant's Wyoming Protocol integration turns it into three entities, which
+together make a full Assist pipeline:
+
+| Wyoming service | Program name | Home Assistant entity | ci-server call |
+|---|---|---|---|
+| `asr` | `companion-stt` | Speech-to-text | `POST /v1/audio/transcriptions` |
+| `handle` | `companion-conversation` | Conversation agent | `POST /v1/responses` |
+| `tts` | `companion-tts` | Text-to-speech | `POST /v1/audio/speech` |
+
+You can use all three, or keep Home Assistant's own Whisper and Piper add-ons
+for speech and use only `companion-conversation`.
+
+## Repository layout
 
 ```
-.
-├── ci-server/             # OpenAI-compatible façade (TypeScript / Express)
-│   ├── src/
-│   │   ├── app.ts         # Express app factory
-│   │   ├── config.ts      # Environment config
-│   │   ├── types.ts       # Canonical request/response types
-│   │   ├── middleware/    # Auth, rate limiting, request ID, error handler
-│   │   ├── normalizers/   # ChatAdapter & ResponsesAdapter
-│   │   ├── providers/     # Ollama / vLLM / OpenAI routing
-│   │   ├── routes/        # /v1/models, chat, responses, audio, speech
-│   │   └── store/         # PostgreSQL + Redis conversation store
-│   ├── tests/             # Jest integration tests
-│   ├── Dockerfile
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── voice-bridge/          # Wyoming ↔ ci-server relay (Python / asyncio)
-│   ├── src/
-│   │   ├── audio/         # PCM ring buffer, VAD, WAV conversion
-│   │   ├── client/        # HTTP client for ci-server (STT / LLM / TTS)
-│   │   └── wyoming/       # Wyoming WebSocket protocol helpers
-│   ├── tests/             # pytest unit tests
-│   ├── main.py            # Entry point
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── db/
-│   └── migrations/
-│       └── 001_initial.sql  # PostgreSQL schema
-│
-├── docker-compose.yml     # Full stack (Postgres, Redis, Ollama, ci-server, voice-bridge)
-└── .env.example           # Environment variable template
+ci-server/        OpenAI-compatible facade (TypeScript / Express)
+  src/memory/       Companion Memory client: recall before, save after each turn
+  src/providers/    LLM routing (Ollama, vLLM, OpenAI) and STT/TTS routing
+  src/routes/       /v1/models, chat, responses, audio, speech, status
+  tests/            Jest tests with in-process stub upstreams
+voice-bridge/     Wyoming server for Home Assistant (Python / asyncio)
+  src/wyoming/      event handler and service description
+  src/client/       ci-server HTTP client
+  tests/            unit tests and Wyoming end-to-end tests
+e2e/              whole-stack test: real ci-server + real bridge, stubbed upstreams
+web/              ha.ci.computer, a Cloudflare Worker serving static assets
+db/migrations/    PostgreSQL schema (reserved for multi-tenant keys)
+docker-compose.yml  full stack for development
+scripts/test-all.sh every check, the way CI runs it
 ```
 
-## Quick Start
+## Quick start
 
-### Prerequisites
+The easiest path is the generator at https://ha.ci.computer. It builds a `.env`
+in your browser and serves a `compose.yml` that pulls published images.
 
-- Docker & Docker Compose
-- (Optional) An [Ollama](https://ollama.ai/) model pulled: `ollama pull llama2`
-- (Optional) An OpenAI API key for Whisper STT / cloud TTS fallback
-
-### 1. Configure
+From a checkout:
 
 ```bash
-cp .env.example .env
-# Edit .env – MASTER_API_KEY is REQUIRED (docker compose will refuse to start
-# without it, and ci-server refuses every /v1 request without it).
-# Generate one with: openssl rand -hex 32
-```
-
-### 2. Start the full stack
-
-```bash
+cp .env.example .env        # set MASTER_API_KEY and POSTGRES_PASSWORD
 docker compose up -d
+docker compose exec ollama ollama pull llama3.2
 ```
 
-Services started:
-| Service       | Port  | Description |
-|---------------|-------|-------------|
-| ci-server     | 8080  | OpenAI-compatible API façade |
-| voice-bridge  | 10700 | Wyoming WebSocket server |
-| postgres      | 5432  | Conversation store |
-| redis         | 6379  | Stream cache & rate-limit buckets |
-| ollama        | 11434 | Local LLM inference |
-
-### 3. Verify ci-server
+For fully local speech, add the speaches container and download its models once:
 
 ```bash
-curl http://localhost:8080/health
-# {"status":"ok","version":"1.0.0"}
-
-curl http://localhost:8080/v1/models \
-  -H "Authorization: Bearer $MASTER_API_KEY"
+docker compose --profile local-audio up -d
+curl -X POST http://localhost:8000/v1/models/Systran/faster-distil-whisper-small.en
+curl -X POST http://localhost:8000/v1/models/speaches-ai/Kokoro-82M-v1.0-ONNX
 ```
 
-### 4. Connect Home Assistant
+and set `STT_BASE_URL`, `STT_MODEL`, `TTS_BASE_URL`, `TTS_MODEL` and
+`CI_TTS_VOICE` as shown in `.env.example`.
 
-In your Home Assistant configuration, add a
-[Wyoming integration](https://www.home-assistant.io/integrations/wyoming/)
-pointing to `ws://<voice-bridge-host>:10700`.
+| Service | Port | What it is |
+|---|---|---|
+| voice-bridge | 10700 (TCP) | Wyoming server Home Assistant connects to |
+| ci-server | 8080 | OpenAI-compatible API |
+| ollama | 11434 | Local LLM |
+| speaches | 8000 | Local STT and TTS (`--profile local-audio`) |
+| postgres | internal | Reserved for tenant keys and history |
+| redis | internal | Reserved for stream cache and quotas |
 
-The Voice Bridge will:
-1. Receive PCM audio from the Voice PE via Wyoming
-2. Apply energy-based VAD to detect utterance boundaries
-3. Convert PCM → WAV and send to `/v1/audio/transcriptions`
-4. Stream the transcript to `/v1/responses` (LLM via Ollama)
-5. Synthesize the reply via `/v1/audio/speech`
-6. Send the audio back to HA / Voice PE for playback
+### Connect Home Assistant
 
-## API Reference
+1. **Settings, Devices & services, Add integration, Wyoming Protocol.**
+2. Host: the machine running the stack. Port: `10700`.
+3. **Settings, Voice assistants**, add an assistant. Choose
+   `companion-conversation` as the conversation agent, and either the
+   companion or your existing speech engines.
+4. On the Voice PE device page, set **Assistant** to it.
 
-All endpoints follow the OpenAI API specification.
+Set `WYOMING_ZEROCONF=true` (with host networking) to have Home Assistant
+discover the bridge on its own.
 
-### Authentication
+### Connect Companion Memory
 
-```
-Authorization: Bearer <MASTER_API_KEY>
-```
-
-Every `/v1` endpoint requires the bearer token to match `MASTER_API_KEY`
-**in every environment**. There is no `NODE_ENV` carve-out and no development
-bypass: if `MASTER_API_KEY` is unset, ci-server fails closed and refuses every
-`/v1` request with `503 auth_not_configured` rather than letting it through.
-The token is compared in constant time.
-
-| Condition | Response |
-|-----------|----------|
-| No `Authorization` header, or not `Bearer …` | `401 invalid_api_key` |
-| Bearer token empty or wrong | `401 invalid_api_key` |
-| `MASTER_API_KEY` not configured on the server | `503 auth_not_configured` |
-
-> **⚠️ BREAKING CHANGE.** ci-server previously validated the bearer token *only*
-> when `NODE_ENV=production`; anywhere else — staging, development, tests,
-> a docker-compose or self-hosted appliance that never set `NODE_ENV` — any
-> non-empty bearer token was accepted, so those deployments were effectively
-> unauthenticated. `MASTER_API_KEY` also silently defaulted to
-> `dev-key-change-me`, so even a production box that forgot to set it was
-> guarded by a value published in this README.
->
-> To upgrade: set `MASTER_API_KEY` on ci-server and the identical value as
-> `CI_SERVER_API_KEY` on voice-bridge (docker-compose now refuses to start
-> without it), and update any client that was sending an arbitrary token.
-
-### Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET`  | `/health` | Health check (unauthenticated) |
-| `GET`  | `/v1/models` | List available models |
-| `POST` | `/v1/chat/completions` | Chat completions (streaming SSE supported) |
-| `POST` | `/v1/responses` | Responses API (typed SSE events) |
-| `POST` | `/v1/audio/transcriptions` | Speech-to-text (multipart WAV/MP3) |
-| `POST` | `/v1/audio/speech` | Text-to-speech (returns MP3/WAV bytes) |
-
-### Streaming
-
-**Chat completions** (`stream: true`):
-```
-data: {"id":"chatcmpl_001","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"}}]}
-data: {"id":"chatcmpl_001","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
-data: [DONE]
-```
-
-**Responses** (`stream: true`):
-```
-data: {"type":"response.created","response":{"id":"resp_abc","status":"in_progress"}}
-data: {"type":"response.output_text.delta","delta":"Sure, turning on the lights."}
-data: {"type":"response.completed","response":{"id":"resp_abc","status":"completed","finish_reason":"stop"}}
-```
-
-### Example: Chat Completion
+Create an API key in Companion Memory under **Settings, API keys** with only the
+`memory` scope, then set:
 
 ```bash
-curl http://localhost:8080/v1/chat/completions \
-  -H "Authorization: Bearer $MASTER_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "ollama:llama2",
-    "messages": [
-      {"role": "system", "content": "You are a concise assistant."},
-      {"role": "user", "content": "Turn on the living room light."}
-    ],
-    "stream": false
-  }'
+CI_MEMORY_URL=https://<your-companion-memory>/api
+CI_MEMORY_API_KEY=<key>
 ```
 
-### Example: Transcription
+Before each answer ci-server fetches `GET /memory/context` and
+`POST /memory/recall` (within `CI_MEMORY_TIMEOUT_MS`, default 1500 ms) and adds
+them as a system message marked as reference data. After the answer it saves the
+exchange with `POST /memory/turn` (`platform: ha-voice-pe`, `sessionId` from
+Home Assistant's conversation id). Set `CI_MEMORY_SAVE_TURNS=false` to recall
+without saving. If memory is slow or down, the assistant still answers.
+
+### Run under Companion Hub
+
+Point ci-server at Hub's inference instead of the bundled Ollama and speech:
 
 ```bash
-curl http://localhost:8080/v1/audio/transcriptions \
-  -H "Authorization: Bearer $MASTER_API_KEY" \
-  -F file=@command.wav \
-  -F model=whisper-1
+OLLAMA_BASE_URL=http://ci-hub:5002/api/inference/pool
+STT_BASE_URL=http://ci-hub:5002/api/inference
+TTS_BASE_URL=http://ci-hub:5002/api/inference
 ```
 
-## Development
+## API
 
-### ci-server (TypeScript)
+Every `/v1` endpoint requires `Authorization: Bearer <MASTER_API_KEY>`, in every
+environment. With `MASTER_API_KEY` unset, ci-server refuses `/v1` requests with
+`503 auth_not_configured`. The key is compared in constant time.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/health` | Unauthenticated liveness |
+| `GET` | `/v1/status` | Which LLM, STT, TTS and memory providers are wired up and reachable. No secrets. |
+| `GET` | `/v1/models` | From Ollama |
+| `POST` | `/v1/chat/completions` | Streaming SSE supported; grounded in memory when configured |
+| `POST` | `/v1/responses` | Typed SSE events; `metadata.session_id` groups saved turns |
+| `POST` | `/v1/audio/transcriptions` | Multipart; routed to `STT_BASE_URL`, else OpenAI Whisper, else `503 stt_not_configured` |
+| `POST` | `/v1/audio/speech` | `response_format` (or legacy `format`); routed to `TTS_BASE_URL`, else OpenAI, else `503 tts_not_configured` |
+
+Local speech servers accept any voice name (`af_heart`, `en_US-lessac-medium`);
+OpenAI routing accepts only OpenAI voices.
 
 ```bash
-cd ci-server
-npm install
-npm test        # Jest tests (tests/setup-env.ts supplies a MASTER_API_KEY)
-npm run build   # TypeScript compile
-MASTER_API_KEY=dev-only-local-key npm run dev  # ts-node development server
+curl http://localhost:8080/v1/status -H "Authorization: Bearer $MASTER_API_KEY"
 ```
 
-`npm run dev` needs `MASTER_API_KEY` like any other environment – auth is not
-relaxed for local development. Put it in `.env` (loaded by dotenv) so you do
-not have to repeat it.
+## Configuration
 
-### voice-bridge (Python)
+`.env.example` documents every variable. The main ones:
+
+| Variable | Default | Used by |
+|---|---|---|
+| `MASTER_API_KEY` | required | ci-server; the bridge sends it as `CI_SERVER_API_KEY` |
+| `CI_MODEL` | `ollama:llama3.2` | both |
+| `OLLAMA_BASE_URL` | `http://ollama:11434` | ci-server |
+| `STT_BASE_URL`, `STT_MODEL`, `STT_API_KEY` | empty | ci-server |
+| `TTS_BASE_URL`, `TTS_MODEL`, `TTS_API_KEY` | empty | ci-server |
+| `OPENAI_API_KEY` | empty | ci-server fallback for speech and `openai:` models |
+| `CI_MEMORY_URL`, `CI_MEMORY_API_KEY` | empty | ci-server |
+| `CI_MEMORY_RECALL`, `CI_MEMORY_SAVE_TURNS` | `true` | ci-server |
+| `CI_TTS_VOICE`, `CI_TTS_VOICES` | `alloy` | bridge (voices offered to Home Assistant) |
+| `LANGUAGES` | `en` | bridge |
+| `SYSTEM_INSTRUCTIONS` | concise assistant | bridge |
+| `HISTORY_TURNS`, `HISTORY_TTL_S` | `6`, `300` | bridge (follow-up context) |
+| `WYOMING_ZEROCONF` | `false` | bridge |
+| `CORS_ORIGINS` | `*` | ci-server (the ha.ci.computer checker needs it) |
+
+## Development and testing
 
 ```bash
-cd voice-bridge
-pip install -r requirements.txt
-pytest tests/   # unit tests
-python main.py  # development server
+scripts/test-all.sh   # everything below, in order
 ```
 
-### Environment Variables
+```bash
+cd ci-server && npm ci && npm run typecheck && npm test && npm run build
+cd voice-bridge && pip install -r requirements.txt -r requirements-dev.txt && python -m pytest
+python -m pytest e2e          # needs ci-server/dist from npm run build
+cd web && npm ci && npm test && npm run check
+```
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8080` | ci-server HTTP port |
-| `DATABASE_URL` | `postgresql://...` | PostgreSQL connection string |
-| `REDIS_URL` | `redis://localhost:6379` | Redis connection string |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OPENAI_API_KEY` | _(empty)_ | OpenAI API key (optional fallback) |
-| `MASTER_API_KEY` | _(required)_ | Bearer token for API auth – unset means every `/v1` request is refused |
-| `CORS_ORIGINS` | `*` | Comma-separated CORS origins |
-| `CI_SERVER_URL` | `http://localhost:8080` | ci-server URL (voice-bridge) |
-| `CI_SERVER_API_KEY` | _(required)_ | API key (voice-bridge) – must equal `MASTER_API_KEY` |
-| `CI_MODEL` | `ollama:llama2` | LLM model to use |
-| `VOICE_BRIDGE_PORT` | `10700` | Wyoming WebSocket port |
-| `SAMPLE_RATE` | `16000` | Audio sample rate (Hz) |
+- **ci-server**: Jest with local stub servers for Ollama, speaches and Companion
+  Memory (`tests/helpers.ts`), so no network is needed.
+- **voice-bridge**: pytest; `tests/test_bridge_e2e.py` drives the bridge with the
+  real `wyoming` client against a fake ci-server.
+- **e2e**: launches the built ci-server and the bridge as processes and runs
+  describe, speech-to-text, a memory-grounded conversation and text-to-speech,
+  then checks what reached each upstream.
+- **web**: `node --test` for the generator logic, plus a drift test that keeps
+  `web/public/compose.yml` in step with `docker-compose.yml`.
 
-## Architecture
+GitHub Actions runs are gated, as in the rest of the organization. Dispatch
+`ci.yml` by hand when you want a hosted run:
 
-See the [Technical Plan](https://github.com/companionintelligence/CI-Home-Assistant-Voice-PE/issues)
-for the full design document including:
+```bash
+gh workflow run ci.yml --repo companionintelligence/CI-Home-Assistant-Voice-PE --ref <branch>
+```
 
-- Voice PE hardware capabilities (ESP32-S3 + XMOS XU316)
-- Wyoming protocol transport details
-- STT/TTS provider comparison table
-- Latency budget (target: <2 s end-to-end)
-- Provider routing (Ollama stateless handling via conversation store)
-- Multi-tenancy and API key management
-- Database schema (PostgreSQL + Redis)
+## Deployment
+
+- **ha.ci.computer**: `.github/workflows/deploy-web.yml` deploys `web/` as the
+  Worker `ci-ha-voice-setup` with a Custom Domain whenever `web/` changes on
+  `main`. It needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
+  secrets, and `ha.ci.computer` must not already have a DNS record. Manual
+  deploy: `cd web && npx wrangler deploy`.
+- **Images**: `.github/workflows/publish-images.yml` publishes
+  `ghcr.io/companionintelligence/ci-ha-voice-server` and `ci-ha-voice-bridge`
+  (amd64 and arm64) on `v*` tags or on demand. Make both packages public after
+  the first run so `compose.yml` and Companion Hub can pull them.
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md). See [NOTICE.md](NOTICE.md),
+[THIRD_PARTY.md](THIRD_PARTY.md) and [CREDITS.md](CREDITS.md).

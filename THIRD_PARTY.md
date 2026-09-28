@@ -5,52 +5,52 @@ Every direct dependency declared in this repository's manifests — both
 each group. Transitive dependencies are not listed; resolve them with your
 package manager's own `licenses` command.
 
-**30 direct dependencies** across 6 licence groups.
+**35 direct dependencies** across 7 licence groups.
 
 | Licence | Count |
 | --- | ---: |
-| MIT | 24 |
-| BSD-3-Clause | 2 |
-| Apache-2.0 | 1 |
+| MIT | 27 |
+| Apache-2.0 | 2 |
+| ISC | 2 |
 | Apache-2.0 AND MIT | 1 |
 | BSD-2-Clause | 1 |
-| ISC | 1 |
+| LGPL-2.1-or-later | 1 |
+| MIT OR Apache-2.0 | 1 |
 
 ## MIT
 
 1. [`axios`](https://axios-http.com) `1.20.0` — runtime
 2. [`cors`](https://github.com/expressjs/cors#readme) `2.8.6` — runtime
 3. [`express`](https://expressjs.com/) `5.2.1` — runtime
-4. [`express-rate-limit`](https://github.com/express-rate-limit/express-rate-limit) `8.7.0` — runtime
-5. [`multer`](https://github.com/expressjs/multer#readme) `2.4.0` — runtime
-6. [`pg`](https://github.com/brianc/node-postgres) `8.23.0` — runtime
-7. [`redis`](https://github.com/redis/node-redis) `6.2.1` — runtime
-8. [`uuid`](https://github.com/uuidjs/uuid#readme) `14.0.2` — runtime
-9. [`winston`](https://github.com/winstonjs/winston#readme) `3.19.0` — runtime
-10. [`@types/cors`](https://github.com/DefinitelyTyped/DefinitelyTyped) `2.8.19` — dev
-11. [`@types/express`](https://github.com/DefinitelyTyped/DefinitelyTyped) `5.0.6` — dev
-12. [`@types/jest`](https://github.com/DefinitelyTyped/DefinitelyTyped) `30.0.0` — dev
-13. [`@types/multer`](https://github.com/DefinitelyTyped/DefinitelyTyped) `2.2.0` — dev
-14. [`@types/node`](https://github.com/DefinitelyTyped/DefinitelyTyped) `26.6.2` — dev
-15. [`@types/pg`](https://github.com/DefinitelyTyped/DefinitelyTyped) `8.23.1` — dev
-16. [`@types/supertest`](https://github.com/DefinitelyTyped/DefinitelyTyped) `7.2.1` — dev
-17. [`@types/uuid`](https://www.npmjs.com/package/@types/uuid) `11.0.0` — dev
-18. [`@typescript-eslint/eslint-plugin`](https://typescript-eslint.io/packages/eslint-plugin) `8.70.1` — dev
-19. [`@typescript-eslint/parser`](https://typescript-eslint.io/packages/parser) `8.70.1` — dev
-20. [`eslint`](https://eslint.org) `10.11.0` — dev
-21. [`jest`](https://jestjs.io/) `30.5.2` — dev
-22. [`supertest`](https://github.com/ladjs/supertest#readme) `7.2.2` — dev
-23. [`ts-jest`](https://kulshekhar.github.io/ts-jest) `29.4.12` — dev
-24. [`ts-node`](https://typestrong.org/ts-node) `10.9.2` — dev
-
-## BSD-3-Clause
-
-1. [`python-dotenv`](https://github.com/theskumar/python-dotenv) `1.2.3` — runtime — pypi
-2. [`websockets`](https://github.com/python-websockets/websockets) `17.1` — runtime — pypi
+4. [`form-data`](https://github.com/form-data/form-data#readme) `4.0.6` — runtime
+5. [`express-rate-limit`](https://github.com/express-rate-limit/express-rate-limit) `8.7.0` — runtime
+6. [`multer`](https://github.com/expressjs/multer#readme) `2.4.0` — runtime
+7. [`pg`](https://github.com/brianc/node-postgres) `8.23.0` — runtime
+8. [`redis`](https://github.com/redis/node-redis) `6.2.1` — runtime
+9. [`uuid`](https://github.com/uuidjs/uuid#readme) `14.0.2` — runtime
+10. [`winston`](https://github.com/winstonjs/winston#readme) `3.19.0` — runtime
+11. [`wyoming`](https://github.com/OHF-Voice/wyoming) `1.10.2` — runtime — pypi
+12. [`@types/cors`](https://github.com/DefinitelyTyped/DefinitelyTyped) `2.8.19` — dev
+13. [`@types/express`](https://github.com/DefinitelyTyped/DefinitelyTyped) `5.0.6` — dev
+14. [`@types/jest`](https://github.com/DefinitelyTyped/DefinitelyTyped) `30.0.0` — dev
+15. [`@types/multer`](https://github.com/DefinitelyTyped/DefinitelyTyped) `2.2.0` — dev
+16. [`@types/node`](https://github.com/DefinitelyTyped/DefinitelyTyped) `26.6.2` — dev
+17. [`@types/pg`](https://github.com/DefinitelyTyped/DefinitelyTyped) `8.23.1` — dev
+18. [`@types/supertest`](https://github.com/DefinitelyTyped/DefinitelyTyped) `7.2.1` — dev
+19. [`@types/uuid`](https://www.npmjs.com/package/@types/uuid) `11.0.0` — dev
+20. [`@typescript-eslint/eslint-plugin`](https://typescript-eslint.io/packages/eslint-plugin) `8.70.1` — dev
+21. [`@typescript-eslint/parser`](https://typescript-eslint.io/packages/parser) `8.70.1` — dev
+22. [`eslint`](https://eslint.org) `10.11.0` — dev
+23. [`jest`](https://jestjs.io/) `30.5.2` — dev
+24. [`supertest`](https://github.com/ladjs/supertest#readme) `7.2.2` — dev
+25. [`ts-jest`](https://kulshekhar.github.io/ts-jest) `29.4.12` — dev
+26. [`ts-node`](https://typestrong.org/ts-node) `10.9.2` — dev
+27. [`pytest`](https://docs.pytest.org) `9.1.1` — dev — pypi
 
 ## Apache-2.0
 
 1. [`typescript`](https://www.typescriptlang.org/) `7.0.2` — dev
+2. [`pytest-asyncio`](https://github.com/pytest-dev/pytest-asyncio) `1.4.0` — dev — pypi
 
 ## Apache-2.0 AND MIT
 
@@ -63,6 +63,21 @@ package manager's own `licenses` command.
 ## ISC
 
 1. [`express-async-errors`](https://github.com/davidbanham/express-async-errors#readme) `3.1.1` — runtime
+2. [`yaml`](https://eemeli.org/yaml/) `2.9.1` — dev (web)
+
+## LGPL-2.1-or-later
+
+1. [`zeroconf`](https://github.com/python-zeroconf/python-zeroconf) `0.88.0` — runtime — pypi (via `wyoming[zeroconf]`, optional mDNS discovery)
+
+## MIT OR Apache-2.0
+
+1. [`wrangler`](https://github.com/cloudflare/workers-sdk) `4.142.0` — dev (web)
+
+## Bundled assets
+
+The setup site in `web/public/fonts/` self-hosts three typefaces under the
+SIL Open Font License 1.1, with their licence texts alongside:
+Manrope, Archivo Black and JetBrains Mono.
 
 
 ---
