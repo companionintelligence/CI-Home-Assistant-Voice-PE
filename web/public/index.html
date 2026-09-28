@@ -4,15 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Companion Voice for Home Assistant</title>
-  <meta name="description" content="Set up the Home Assistant Voice Preview Edition to talk to your own Companion Intelligence: local models, your memory, your hardware.">
+  <meta name="description" content="Connect the Home Assistant Voice Preview Edition to a Companion that runs on your hardware and remembers what matters to you. Guided setup in about fifteen minutes.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f3faf7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#041620" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#041620">
+  <meta property="og:type" content="website">
   <meta property="og:title" content="Companion Voice for Home Assistant">
-  <meta property="og:description" content="Point your Voice PE at a Companion that runs on your hardware and remembers what matters to you.">
+  <meta property="og:description" content="Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.">
   <meta property="og:url" content="https://ha.ci.computer/">
-  <link rel="icon" href="/mark.svg" type="image/svg+xml">
+  <meta property="og:image" content="https://ha.ci.computer/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="preload" href="/fonts/manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/archivo-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
 </head>
@@ -21,13 +25,13 @@
 
   <header class="site-header">
     <div class="wrap header-row">
-      <a class="brand" href="https://ci.computer" aria-label="Companion Intelligence home">
-        <img src="/mark.svg" alt="" width="28" height="28">
-        <span>Companion Intelligence</span>
+      <a class="brand" href="/" aria-label="Companion Voice home">
+        <img src="/favicon.svg" alt="" width="30" height="30">
+        <span>Companion Voice</span>
       </a>
       <nav class="header-nav" aria-label="Page">
         <a href="#how">How it works</a>
-        <a href="#setup">Setup</a>
+        <a href="#setup">Set up</a>
         <a href="#check">Check</a>
         <a href="#help">Help</a>
       </nav>
@@ -35,264 +39,379 @@
   </header>
 
   <main>
-    <section class="hero wrap" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow">Home Assistant Voice PE</p>
-        <h1 id="hero-title">Say “Okay Nabu.” Your Companion answers.</h1>
-        <p class="lede">
-          Connect the Home Assistant Voice Preview Edition to a Companion that runs on your own hardware.
-          It speaks through your local model, draws on your Companion Memory, and keeps every word in your house.
-        </p>
-        <div class="hero-actions">
-          <a class="button primary" href="#setup">Start setup</a>
-          <a class="button ghost" href="#how">See how it connects</a>
-        </div>
-      </div>
-
-      <figure class="device" aria-label="Voice PE LED ring listening">
-        <div class="puck">
-          <div class="ring" id="led-ring" aria-hidden="true"></div>
-          <div class="puck-center">
-            <span class="port-label">Wyoming TCP</span>
-            <span class="port-number">10700</span>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">For the Home Assistant Voice PE</p>
+          <h1 id="hero-title">Your voice assistant. <span>Your Companion.</span></h1>
+          <p class="lede">
+            Say the wake word and get an answer from a Companion that runs on your own computer,
+            knows your life from Companion Memory, and keeps every word inside your home.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#setup">Set it up</a>
+            <a class="button ghost-light" href="#how">How it works</a>
           </div>
+          <ul class="hero-facts" aria-label="At a glance">
+            <li><strong>About 15 minutes</strong><span>from box to first answer</span></li>
+            <li><strong>Runs locally</strong><span>on a Mac, PC or Linux box</span></li>
+            <li><strong>Keeps your setup</strong><span>works with the Home Assistant you have</span></li>
+          </ul>
         </div>
-        <figcaption>The one port Home Assistant needs.</figcaption>
-      </figure>
+
+        <figure class="hero-art" aria-label="A Voice PE, seen from above, with its light ring showing it is listening">
+          <div class="halo" aria-hidden="true"></div>
+          <svg class="puck" viewBox="0 0 512 512" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="pk-body" x1="0.2" y1="0" x2="0.8" y2="1">
+                <stop offset="0" stop-color="#1b3f49"/>
+                <stop offset="1" stop-color="#081c24"/>
+              </linearGradient>
+              <linearGradient id="pk-edge" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#3b6f79"/>
+                <stop offset="1" stop-color="#0b2630"/>
+              </linearGradient>
+              <radialGradient id="pk-dial" cx="0.42" cy="0.35" r="0.75">
+                <stop offset="0" stop-color="#15343f"/>
+                <stop offset="1" stop-color="#06161d"/>
+              </radialGradient>
+              <radialGradient id="pk-button" cx="0.4" cy="0.35" r="0.8">
+                <stop offset="0" stop-color="#244c57"/>
+                <stop offset="1" stop-color="#0b2029"/>
+              </radialGradient>
+              <filter id="pk-glow" x="-150%" y="-150%" width="400%" height="400%">
+                <feGaussianBlur stdDeviation="6" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect x="76" y="76" width="360" height="360" rx="96" fill="url(#pk-edge)"/>
+            <rect x="80" y="80" width="352" height="352" rx="92" fill="url(#pk-body)"/>
+            <circle cx="256" cy="256" r="156" fill="#0a222c" stroke="#2a5d68" stroke-width="3"/>
+            <circle class="knurl" cx="256" cy="256" r="147" fill="none" stroke="#2f6773" stroke-width="10" stroke-dasharray="3 12.4"/>
+            <circle cx="256" cy="256" r="138" fill="url(#pk-dial)" stroke="#051218" stroke-width="3"/>
+            <g class="ring" filter="url(#pk-glow)"></g>
+            <circle cx="256" cy="256" r="52" fill="url(#pk-button)" stroke="#2a5d68" stroke-width="3"/>
+            <circle cx="256" cy="256" r="9" fill="#c5e8dc"/>
+          </svg>
+          <figcaption><span class="dot" aria-hidden="true"></span>Listening on Wyoming, TCP 10700</figcaption>
+        </figure>
+      </div>
     </section>
 
-    <section class="band" id="how" aria-labelledby="how-title">
+    <section class="how" id="how" aria-labelledby="how-title">
       <div class="wrap">
-        <h2 id="how-title">How your voice travels</h2>
-        <p class="section-intro">
-          The Voice PE hears the wake word on the device and streams your request to Home Assistant.
-          Home Assistant hands it to the Companion voice bridge, which asks ci-server for a transcript,
-          an answer and a spoken reply.
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-title">Three hops, all inside your home</h2>
+        <ol class="flow">
+          <li>
+            <span class="flow-no">1</span>
+            <h3>You speak</h3>
+            <p>The Voice PE hears its wake word on the device and streams your question to Home Assistant.</p>
+          </li>
+          <li>
+            <span class="flow-no">2</span>
+            <h3>Home Assistant listens</h3>
+            <p>Its Assist pipeline turns speech into text and hands it to the Companion voice bridge over Wyoming.</p>
+          </li>
+          <li>
+            <span class="flow-no">3</span>
+            <h3>Your Companion answers</h3>
+            <p>Your local model answers with what Companion Memory knows about you, and the reply is spoken back.</p>
+          </li>
+        </ol>
+        <p class="aside">
+          Keep Home Assistant's own Whisper and Piper for speech, or let Companion handle speech too.
+          Nothing leaves the house unless you pick cloud speech.
         </p>
-        <div class="path-scroll">
-          <ol class="signal-path">
-            <li>
-              <span class="hop-name">Voice PE</span>
-              <span class="hop-detail">Wake word, mics, speaker</span>
-            </li>
-            <li>
-              <span class="hop-name">Home Assistant Assist</span>
-              <span class="hop-detail">Runs the voice pipeline</span>
-            </li>
-            <li class="hop-ours">
-              <span class="hop-name">Voice bridge</span>
-              <span class="hop-detail">Wyoming, port 10700</span>
-            </li>
-            <li class="hop-ours">
-              <span class="hop-name">ci-server</span>
-              <span class="hop-detail">OpenAI-compatible API, port 8080</span>
-            </li>
-            <li class="hop-fork">
-              <span class="hop-name">Ollama and speech</span>
-              <span class="hop-detail">Local model, Whisper, Kokoro</span>
-              <span class="hop-name">Companion Memory</span>
-              <span class="hop-detail">Recall and save each exchange</span>
-            </li>
-          </ol>
-        </div>
-        <dl class="facts">
-          <div><dt>Latency target</dt><dd>Under 2 s from end of speech to first word</dd></div>
-          <div><dt>Where it runs</dt><dd>Any Mac, PC or Linux box on your network</dd></div>
-          <div><dt>What leaves the house</dt><dd>Nothing, unless you choose OpenAI speech</dd></div>
-        </dl>
       </div>
     </section>
 
-    <section class="wrap setup" id="setup" aria-labelledby="setup-title">
-      <h2 id="setup-title">Set it up</h2>
-      <p class="section-intro">Five steps, about fifteen minutes. The setup file is built in your browser and never sent anywhere.</p>
-
-      <ol class="steps">
-        <li class="step" id="step-install">
-          <h3><span class="step-no">1</span>Choose where it runs</h3>
-          <div class="choice-row" role="radiogroup" aria-label="Install method">
-            <label class="choice">
-              <input type="radio" name="install" value="compose" id="install-compose" checked>
-              <span class="choice-title">Docker Compose</span>
-              <span class="choice-text">Any machine with Docker. You get a compose file and a filled-in .env.</span>
-            </label>
-            <label class="choice">
-              <input type="radio" name="install" value="hub" id="install-hub">
-              <span class="choice-title">Companion Hub</span>
-              <span class="choice-text">Install from the Hub store. Hub supplies the model and speech engines.</span>
-            </label>
+    <section class="setup" id="setup" aria-labelledby="setup-title">
+      <div class="wrap">
+        <div class="setup-head">
+          <div>
+            <p class="eyebrow">Guided setup</p>
+            <h2 id="setup-title">Set it up</h2>
+            <p class="section-intro">Everything below is built in your browser. Keys are generated here and never sent anywhere.</p>
           </div>
-          <div class="hub-note" id="hub-note" hidden>
-            <p>
-              In Companion Hub, open <strong>Store</strong>, search for <strong>Home Assistant Voice</strong>
-              and install it. Hub connects it to the models and speech engines it already runs.
-              Then continue at step 4. The listing is rolling out, so if you do not see it yet, use Docker Compose.
-            </p>
+          <div class="progress" aria-live="polite">
+            <div class="progress-label"><span id="progress-text">0 of 7 done</span><button type="button" class="linklike" id="reset-progress">Start over</button></div>
+            <div class="progress-bar"><span id="progress-fill"></span></div>
           </div>
-        </li>
+        </div>
 
-        <li class="step" id="step-configure">
-          <h3><span class="step-no">2</span>Configure</h3>
-          <div class="config-grid">
-            <form class="config-form" id="config-form" novalidate>
+        <div class="path-picker" role="radiogroup" aria-label="How do you want to run it?">
+          <label class="path">
+            <input type="radio" name="path" value="docker" id="path-docker" checked>
+            <span class="path-title">Docker</span>
+            <span class="path-text">Any computer with Docker. You download two files and run one command.</span>
+            <span class="badge">Available now</span>
+          </label>
+          <label class="path">
+            <input type="radio" name="path" value="hub" id="path-hub">
+            <span class="path-title">Companion Hub</span>
+            <span class="path-text">Install from the Hub store. Hub supplies the model and connects your memory.</span>
+            <span class="badge muted">Rolling out</span>
+          </label>
+        </div>
+
+        <ol class="steps" id="steps">
+          <!-- Docker: choose -->
+          <li class="step" data-step="choose" data-path="docker">
+            <div class="step-head">
+              <h3>Choose your setup</h3>
+              <label class="done"><input type="checkbox" data-done="choose"> Done</label>
+            </div>
+            <div class="preset-row" role="radiogroup" aria-label="Setup">
+              <label class="preset">
+                <input type="radio" name="speech" value="ha" id="speech-ha" checked>
+                <span class="preset-title">Simplest <span class="badge">Recommended</span></span>
+                <span class="preset-text">Home Assistant keeps its own Whisper and Piper. Companion writes the answers.</span>
+              </label>
+              <label class="preset">
+                <input type="radio" name="speech" value="local" id="speech-local">
+                <span class="preset-title">Fully local voice</span>
+                <span class="preset-text">Companion also handles speech, with Whisper and Kokoro running beside it.</span>
+              </label>
+              <label class="preset">
+                <input type="radio" name="speech" value="openai" id="speech-openai">
+                <span class="preset-title">Cloud speech</span>
+                <span class="preset-text">Answers stay local, while speech uses OpenAI. Needs an OpenAI key.</span>
+              </label>
+            </div>
+            <form class="form-grid" id="config-form" novalidate>
               <div class="field">
-                <label for="model">Language model</label>
-                <input id="model" name="model" type="text" value="ollama:llama3.2" autocomplete="off" spellcheck="false" aria-describedby="model-hint model-error">
-                <p class="hint" id="model-hint">Any Ollama model tag, prefixed with ollama:. Small models answer fastest.</p>
-                <p class="error" id="model-error" role="alert"></p>
+                <label for="model-choice">Language model</label>
+                <select id="model-choice" name="modelChoice"></select>
+                <p class="hint" id="model-note"></p>
               </div>
-
-              <fieldset class="field">
-                <legend>Speech</legend>
-                <label class="radio"><input type="radio" name="speech" value="ha" id="speech-ha" checked> Keep Home Assistant’s Whisper and Piper</label>
-                <label class="radio"><input type="radio" name="speech" value="local" id="speech-local"> Local speech with speaches (Whisper and Kokoro)</label>
-                <label class="radio"><input type="radio" name="speech" value="openai" id="speech-openai"> OpenAI speech</label>
-              </fieldset>
-
-              <div class="field" id="openai-field" hidden>
+              <div class="field">
+                <label for="host">Computer it will run on</label>
+                <input id="host" name="host" type="text" placeholder="192.168.1.20" autocomplete="off" spellcheck="false" aria-describedby="host-hint">
+                <p class="hint" id="host-hint">Its address on your network. Used to fill in the steps below.</p>
+              </div>
+              <div class="field span-2" id="openai-field" hidden>
                 <label for="openaiKey">OpenAI API key</label>
                 <input id="openaiKey" name="openaiKey" type="password" autocomplete="off" spellcheck="false" aria-describedby="openaiKey-error">
                 <p class="error" id="openaiKey-error" role="alert"></p>
               </div>
-
-              <div class="field">
-                <label for="languages">Languages</label>
-                <input id="languages" name="languages" type="text" value="en" autocomplete="off" spellcheck="false">
-                <p class="hint">Comma-separated codes, for example en,de.</p>
-              </div>
-
-              <fieldset class="field">
-                <legend>Companion Memory <span class="optional">optional</span></legend>
-                <label for="memoryUrl">Address</label>
-                <input id="memoryUrl" name="memoryUrl" type="url" placeholder="https://memory.example.com/api" autocomplete="off" spellcheck="false">
-                <label for="memoryKey">API key with the memory scope</label>
-                <input id="memoryKey" name="memoryKey" type="password" autocomplete="off" spellcheck="false" aria-describedby="memory-error">
-                <label class="radio"><input type="checkbox" name="saveTurns" id="saveTurns" checked> Save each exchange to my memory</label>
-                <p class="hint">Create the key in Companion Memory under Settings, API keys, with only the memory scope.</p>
-                <p class="error" id="memory-error" role="alert"></p>
-              </fieldset>
-
-              <div class="field">
-                <label for="instructions">How your Companion should speak</label>
-                <textarea id="instructions" name="instructions" rows="3"></textarea>
-              </div>
+              <details class="field span-2 advanced">
+                <summary>More options</summary>
+                <div class="form-grid inner">
+                  <div class="field" id="custom-model-field" hidden>
+                    <label for="model">Model tag</label>
+                    <input id="model" name="model" type="text" value="ollama:llama3.2" autocomplete="off" spellcheck="false" aria-describedby="model-error">
+                    <p class="error" id="model-error" role="alert"></p>
+                  </div>
+                  <div class="field">
+                    <label for="languages">Languages</label>
+                    <input id="languages" name="languages" type="text" value="en" autocomplete="off" spellcheck="false">
+                    <p class="hint">Comma-separated codes, for example en,de.</p>
+                  </div>
+                  <div class="field span-2">
+                    <label for="instructions">How your Companion should speak</label>
+                    <textarea id="instructions" name="instructions" rows="3"></textarea>
+                  </div>
+                </div>
+              </details>
             </form>
+          </li>
 
-            <div class="output">
+          <!-- Docker: memory -->
+          <li class="step" data-step="memory" data-path="docker">
+            <div class="step-head">
+              <h3>Connect Companion Memory <span class="optional">Optional</span></h3>
+              <label class="done"><input type="checkbox" data-done="memory"> Done</label>
+            </div>
+            <p>With memory connected, answers draw on what your Companion knows about you, and each exchange is saved as a conversation.</p>
+            <label class="switch"><input type="checkbox" id="memory-on"> <span>Use Companion Memory</span></label>
+            <div class="form-grid" id="memory-fields" hidden>
+              <div class="field">
+                <label for="memoryUrl">Companion Memory address</label>
+                <input id="memoryUrl" name="memoryUrl" type="url" placeholder="https://memory.example.com/api" autocomplete="off" spellcheck="false" aria-describedby="memory-error">
+                <p class="hint">Include /api when you reach it through its gateway.</p>
+              </div>
+              <div class="field">
+                <label for="memoryKey">API key with the memory scope</label>
+                <input id="memoryKey" name="memoryKey" type="password" autocomplete="off" spellcheck="false">
+                <p class="hint">In Companion Memory: Settings, API keys, scope memory.</p>
+              </div>
+              <label class="switch span-2"><input type="checkbox" id="saveTurns" checked> <span>Save each exchange to my memory</span></label>
+              <p class="error span-2" id="memory-error" role="alert"></p>
+            </div>
+          </li>
+
+          <!-- Docker: files -->
+          <li class="step" data-step="files" data-path="docker">
+            <div class="step-head">
+              <h3>Download your two files</h3>
+              <label class="done"><input type="checkbox" data-done="files"> Done</label>
+            </div>
+            <p>Put both in one empty folder on that computer, for example <code>companion-voice</code>.</p>
+            <div class="download-row">
+              <button type="button" class="download" id="download-compose">
+                <span class="dl-name">compose.yml</span><span class="dl-text">The services to run</span>
+              </button>
+              <button type="button" class="download" id="download-env">
+                <span class="dl-name">.env</span><span class="dl-text">Your settings and fresh keys</span>
+              </button>
+            </div>
+            <details class="peek">
+              <summary>Look inside .env</summary>
               <div class="file">
                 <div class="file-head">
                   <span class="file-name">.env</span>
                   <div class="file-actions">
-                    <button type="button" class="button small" id="copy-env">Copy</button>
-                    <button type="button" class="button small" id="download-env">Download</button>
-                    <button type="button" class="button small ghost" id="regen">New keys</button>
+                    <button type="button" class="button small on-dark" id="copy-env">Copy</button>
+                    <button type="button" class="button small on-dark" id="regen">New keys</button>
                   </div>
                 </div>
                 <pre class="code" id="env-output" tabindex="0"></pre>
               </div>
-              <p class="hint">The keys were generated in this tab with your browser’s secure random source. If the download arrives as env.txt or _env, rename it to .env.</p>
-            </div>
-          </div>
-        </li>
+            </details>
+            <p class="hint">If the download arrives as env.txt or _env, rename it to .env.</p>
+          </li>
 
-        <li class="step" id="step-start">
-          <h3><span class="step-no">3</span>Start it</h3>
-          <p>Run these on the machine that will host your Companion.</p>
-          <div class="file">
-            <div class="file-head">
-              <span class="file-name">terminal</span>
-              <div class="file-actions">
-                <button type="button" class="button small" id="copy-cmds">Copy</button>
-                <a class="button small ghost" href="/compose.yml">View compose.yml</a>
+          <!-- Docker: start -->
+          <li class="step" data-step="start" data-path="docker">
+            <div class="step-head">
+              <h3>Start it</h3>
+              <label class="done"><input type="checkbox" data-done="start"> Done</label>
+            </div>
+            <p>Open a terminal in that folder and run:</p>
+            <div class="file">
+              <div class="file-head">
+                <span class="file-name">terminal</span>
+                <div class="file-actions"><button type="button" class="button small on-dark" id="copy-cmds">Copy</button></div>
+              </div>
+              <pre class="code" id="cmd-output" tabindex="0"></pre>
+            </div>
+            <p class="hint">The first start downloads the model, which can take a few minutes.</p>
+          </li>
+
+          <!-- Hub: install -->
+          <li class="step" data-step="hub-install" data-path="hub">
+            <div class="step-head">
+              <h3>Install from the Hub store</h3>
+              <label class="done"><input type="checkbox" data-done="hub-install"> Done</label>
+            </div>
+            <p>Open your Companion Hub, find <strong>Home Assistant Voice</strong> in the store and install it. Hub connects it to the models it already runs.</p>
+            <div class="button-row">
+              <a class="button primary" href="https://hub.ci.computer/install#ci-ha-voice">Open in Companion Hub</a>
+            </div>
+            <p class="hint">The listing is rolling out. If you do not see it yet, choose Docker above.</p>
+          </li>
+
+          <!-- Hub: memory -->
+          <li class="step" data-step="hub-memory" data-path="hub">
+            <div class="step-head">
+              <h3>Approve Companion Memory</h3>
+              <label class="done"><input type="checkbox" data-done="hub-memory"> Done</label>
+            </div>
+            <p>Hub asks you to approve a key for the app. It can only reach your memory, to recall and to save conversations. It cannot delete anything.</p>
+          </li>
+
+          <!-- Shared: Home Assistant -->
+          <li class="step" data-step="ha" data-path="docker hub">
+            <div class="step-head">
+              <h3>Add it to Home Assistant</h3>
+              <label class="done"><input type="checkbox" data-done="ha"> Done</label>
+            </div>
+            <p>Add the Wyoming Protocol integration and enter:</p>
+            <div class="values">
+              <button type="button" class="value" id="copy-host"><span class="value-label">Host</span><span class="value-text" id="host-value">your computer's address</span></button>
+              <button type="button" class="value" id="copy-port"><span class="value-label">Port</span><span class="value-text">10700</span></button>
+            </div>
+            <div class="button-row">
+              <a class="button primary" href="https://my.home-assistant.io/redirect/config_flow_start/?domain=wyoming" rel="noopener">Open Home Assistant</a>
+            </div>
+            <p class="hint">Home Assistant then shows three services: companion-stt, companion-tts and companion-conversation.</p>
+          </li>
+
+          <!-- Shared: pipeline -->
+          <li class="step" data-step="pipeline" data-path="docker hub">
+            <div class="step-head">
+              <h3>Give the Voice PE its assistant</h3>
+              <label class="done"><input type="checkbox" data-done="pipeline"> Done</label>
+            </div>
+            <p>In Voice assistants, add an assistant called Companion with these choices, then pick it on the Voice PE's device page.</p>
+            <div class="table-scroll">
+              <table class="slots">
+                <thead><tr><th scope="col">Setting</th><th scope="col">Choose</th></tr></thead>
+                <tbody id="slots-body"></tbody>
+              </table>
+            </div>
+            <div class="button-row">
+              <a class="button primary" href="https://my.home-assistant.io/redirect/voice_assistants/" rel="noopener">Open Voice assistants</a>
+              <a class="button ghost" href="https://my.home-assistant.io/redirect/devices/" rel="noopener">Open Devices</a>
+            </div>
+          </li>
+
+          <!-- Shared: check -->
+          <li class="step" data-step="check" data-path="docker hub" id="check">
+            <div class="step-head">
+              <h3>Check it</h3>
+              <label class="done"><input type="checkbox" data-done="check"> Done</label>
+            </div>
+            <div class="check-grid">
+              <form class="check-form" id="check-form" novalidate>
+                <div class="field">
+                  <label for="serverUrl">ci-server address</label>
+                  <input id="serverUrl" name="serverUrl" type="url" placeholder="https://voice.your-tailnet.ts.net" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="field">
+                  <label for="serverKey">MASTER_API_KEY</label>
+                  <input id="serverKey" name="serverKey" type="password" autocomplete="off" spellcheck="false">
+                  <p class="hint">From your .env, or the Voice API key on the Hub app page.</p>
+                </div>
+                <button type="submit" class="button primary" id="check-run">Run check</button>
+                <p class="notice" id="check-notice" role="status"></p>
+              </form>
+              <div class="check-results">
+                <ul class="results" id="check-results" aria-live="polite">
+                  <li class="result idle"><span class="pill">waiting</span><span class="result-label">Run the check to see each part.</span></li>
+                </ul>
+                <div class="file">
+                  <div class="file-head">
+                    <span class="file-name">or from any computer on your network</span>
+                    <div class="file-actions"><button type="button" class="button small on-dark" id="copy-curl">Copy</button></div>
+                  </div>
+                  <pre class="code" id="curl-output" tabindex="0"></pre>
+                </div>
               </div>
             </div>
-            <pre class="code" id="cmd-output" tabindex="0"></pre>
-          </div>
-        </li>
-
-        <li class="step" id="step-ha">
-          <h3><span class="step-no">4</span>Add it to Home Assistant</h3>
-          <ol class="substeps">
-            <li>Open <strong>Settings</strong>, then <strong>Devices &amp; services</strong>, then <strong>Add integration</strong>.</li>
-            <li>Choose <strong>Wyoming Protocol</strong>.</li>
-            <li>Host: the IP address of the machine from step 3. Port: <code>10700</code>.</li>
-            <li>Home Assistant finds three services: <code>companion-stt</code>, <code>companion-tts</code> and <code>companion-conversation</code>.</li>
-          </ol>
-        </li>
-
-        <li class="step" id="step-pipeline">
-          <h3><span class="step-no">5</span>Give the Voice PE its pipeline</h3>
-          <p>In <strong>Settings</strong>, <strong>Voice assistants</strong>, add an assistant named Companion and set:</p>
-          <div class="table-scroll">
-            <table class="slots">
-              <thead><tr><th scope="col">Pipeline slot</th><th scope="col">Choose</th></tr></thead>
-              <tbody id="slots-body"></tbody>
-            </table>
-          </div>
-          <p>Then open the Voice PE device page and set its <strong>Assistant</strong> to Companion. Say the wake word and ask something only your Companion would know.</p>
-        </li>
-      </ol>
-    </section>
-
-    <section class="band" id="check" aria-labelledby="check-title">
-      <div class="wrap check-grid">
-        <div>
-          <h2 id="check-title">Check your server</h2>
-          <p class="section-intro">
-            Ask your ci-server what it is connected to. The request goes straight from this tab to your server;
-            the key is not stored or sent anywhere else.
-          </p>
-          <form class="check-form" id="check-form" novalidate>
-            <div class="field">
-              <label for="serverUrl">ci-server address</label>
-              <input id="serverUrl" name="serverUrl" type="url" placeholder="https://voice.your-tailnet.ts.net" autocomplete="off" spellcheck="false">
-            </div>
-            <div class="field">
-              <label for="serverKey">MASTER_API_KEY</label>
-              <input id="serverKey" name="serverKey" type="password" autocomplete="off" spellcheck="false">
-            </div>
-            <button type="submit" class="button primary" id="check-run">Run check</button>
-            <p class="notice" id="check-notice" role="status"></p>
-          </form>
-        </div>
-        <div class="check-results">
-          <ul class="results" id="check-results" aria-live="polite">
-            <li class="result idle"><span class="pill">waiting</span><span class="result-label">Enter an address and run the check.</span></li>
-          </ul>
-          <div class="file">
-            <div class="file-head">
-              <span class="file-name">or from your network</span>
-              <div class="file-actions"><button type="button" class="button small" id="copy-curl">Copy</button></div>
-            </div>
-            <pre class="code" id="curl-output" tabindex="0"></pre>
-          </div>
-        </div>
+            <p class="finale">Then say the wake word and ask something only your Companion would know.</p>
+          </li>
+        </ol>
       </div>
     </section>
 
-    <section class="wrap help" id="help" aria-labelledby="help-title">
-      <h2 id="help-title">When something is off</h2>
-      <div class="faq">
-        <details>
-          <summary>Home Assistant says it cannot connect</summary>
-          <p>Wyoming is plain TCP, not a web address. Enter only the IP and port 10700, and make sure no firewall blocks it. From the Home Assistant host, <code>nc -vz &lt;ip&gt; 10700</code> should succeed.</p>
-        </details>
-        <details>
-          <summary>The Voice PE lights up but never answers</summary>
-          <p>Run the check above. A red language model row usually means the model is not pulled yet: <code>docker compose -f compose.yml exec ollama ollama pull llama3.2</code>.</p>
-        </details>
-        <details>
-          <summary>Speech-to-text returns nothing</summary>
-          <p>If you chose local speech, download the models once (the two curl lines in step 3). If you kept Home Assistant speech, pick faster-whisper and Piper in the pipeline instead of the companion ones.</p>
-        </details>
-        <details>
-          <summary>Answers do not use my memory</summary>
-          <p>The key needs the memory scope, and the address must include <code>/api</code> when you reach Companion Memory through its gateway. The check shows the exact error.</p>
-        </details>
-        <details>
-          <summary>The check here fails but curl works</summary>
-          <p>Browsers block an https page from calling a plain http address on your network. Serve ci-server over https with Tailscale Serve or a Cloudflare Tunnel, or trust the curl result.</p>
-        </details>
+    <section class="help" id="help" aria-labelledby="help-title">
+      <div class="wrap">
+        <p class="eyebrow">Help</p>
+        <h2 id="help-title">When something is off</h2>
+        <div class="faq">
+          <details>
+            <summary>Home Assistant cannot connect</summary>
+            <p>Wyoming is plain TCP, not a web address. Enter only the IP and port 10700, and check that no firewall blocks it. From the Home Assistant host, <code>nc -vz &lt;ip&gt; 10700</code> should succeed.</p>
+          </details>
+          <details>
+            <summary>The Voice PE lights up but never answers</summary>
+            <p>Run the check. A red language model row usually means the model is still downloading or was never pulled: <code>docker compose -f compose.yml exec ollama ollama pull llama3.2</code>.</p>
+          </details>
+          <details>
+            <summary>Speech-to-text returns nothing</summary>
+            <p>With fully local voice, download the speech models once (the two curl lines in Start it). With the simplest setup, choose faster-whisper and Piper in the assistant instead of the companion ones.</p>
+          </details>
+          <details>
+            <summary>Answers do not use my memory</summary>
+            <p>The key needs the memory scope, and the address must end in <code>/api</code> when you reach Companion Memory through its gateway. The check shows the exact error.</p>
+          </details>
+          <details>
+            <summary>The check here fails but curl works</summary>
+            <p>Browsers block an https page from calling a plain http address on your network. Serve ci-server over https with Tailscale Serve or a Cloudflare Tunnel, or trust the curl result.</p>
+          </details>
+        </div>
       </div>
     </section>
   </main>
@@ -300,8 +419,9 @@
   <footer class="site-footer">
     <div class="wrap footer-row">
       <p>Companion Voice is part of <a href="https://ci.computer">Companion Intelligence</a>. Free for personal and nonprofit use under the PolyForm Noncommercial License.</p>
-      <p class="footer-links"><a href="https://ci.computer/hub">Companion Hub</a><a href="https://docs.ci.computer">Docs</a><a href="https://www.home-assistant.io/voice-pe/">About Voice PE</a></p>
+      <p class="footer-links"><a href="https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe">Docs</a><a href="https://ci.computer/hub">Companion Hub</a><a href="https://www.home-assistant.io/voice-pe/">About Voice PE</a></p>
     </div>
   </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

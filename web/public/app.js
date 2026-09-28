@@ -1,92 +1,150 @@
 import {
   DEFAULTS,
+  MODEL_CHOICES,
   browserReachability,
   buildEnv,
+  cleanHost,
   curlChecks,
   generateSecret,
   interpretStatus,
   normalizeUrl,
   pipelineSlots,
+  progress,
+  serverUrlForHost,
   startCommands,
   validate,
 } from './config.js';
 
 const $ = (id) => document.getElementById(id);
+const STORE_KEY = 'ci-ha-voice-setup-v1';
 
-// ── LED ring ────────────────────────────────────────────────────────────────
-// The Voice PE ring has 12 LEDs. It rests showing the "listening" arc in the
-// Companion mark's three teals, and sweeps once on load unless motion is reduced.
-const LEDS = 12;
-const COLORS = ['var(--led-1)', 'var(--led-2)', 'var(--led-3)'];
-
-function buildRing() {
-  const ring = $('led-ring');
-  if (!ring) return [];
-  const leds = [];
-  for (let i = 0; i < LEDS; i++) {
-    const led = document.createElement('span');
-    led.className = 'led';
-    const angle = (i / LEDS) * 360;
-    led.style.transform = `rotate(${angle}deg) translateY(-560%) `;
-    ring.appendChild(led);
-    leds.push(led);
+// ── Saved progress (per viewer, never secrets) ─────────────────────────────
+function loadSaved() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {};
+  } catch {
+    return {};
   }
-  return leds;
+}
+function save(state) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch {
+    /* private window or blocked storage: the page still works */
+  }
 }
 
-function paintRing(leds, head) {
+// ── Toast ───────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(text) {
+  const el = $('toast');
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (el.hidden = true), 1800);
+}
+
+// ── Hero light ring ─────────────────────────────────────────────────────────
+// The Voice PE ring has 12 LEDs. It rests on the "listening" sweep and runs it
+// twice on load (and once per finished step) unless motion is reduced.
+const LEDS = 12;
+let leds = [];
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function buildRing() {
+  const group = document.querySelector('.puck .ring');
+  if (!group) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  for (let i = 0; i < LEDS; i++) {
+    const a = ((i * 30 - 90) * Math.PI) / 180;
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('cx', (256 + 106 * Math.cos(a)).toFixed(1));
+    c.setAttribute('cy', (256 + 106 * Math.sin(a)).toFixed(1));
+    c.setAttribute('r', '11');
+    c.setAttribute('class', 'led');
+    group.appendChild(c);
+    leds.push(c);
+  }
+  paintRing(1);
+}
+
+function paintRing(head) {
+  const tail = [1, 0.85, 0.6, 0.35];
   leds.forEach((led, i) => {
-    const distance = (head - i + LEDS) % LEDS;
-    const lit = distance < 3;
-    led.classList.toggle('on', lit);
-    led.style.color = lit ? COLORS[distance] : '';
-    led.style.backgroundColor = lit ? COLORS[distance] : '';
+    const d = (head - i + LEDS) % LEDS;
+    if (d < tail.length) {
+      led.classList.add('on');
+      led.setAttribute('r', '12.5');
+      led.style.fill = `rgba(223, 247, 241, ${tail[d]})`;
+    } else {
+      led.classList.remove('on');
+      led.setAttribute('r', '10');
+      led.style.fill = '';
+    }
   });
 }
 
-function startRing() {
-  const leds = buildRing();
-  if (!leds.length) return;
-  paintRing(leds, 2);
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced) return;
-  let head = 2;
+let sweepTimer;
+function sweep(turns = 2) {
+  if (reducedMotion || !leds.length) return;
+  clearInterval(sweepTimer);
+  let head = 1;
   let steps = 0;
-  const timer = setInterval(() => {
+  sweepTimer = setInterval(() => {
     head = (head + 1) % LEDS;
-    paintRing(leds, head);
-    steps += 1;
-    if (steps >= LEDS * 2) {
-      clearInterval(timer);
-      paintRing(leds, 2);
+    paintRing(head);
+    if (++steps >= LEDS * turns) {
+      clearInterval(sweepTimer);
+      paintRing(1);
     }
-  }, 110);
+  }, 90);
 }
 
-// ── Setup generator ─────────────────────────────────────────────────────────
+// ── Setup state ─────────────────────────────────────────────────────────────
+const saved = loadSaved();
+const state = {
+  path: saved.path === 'hub' ? 'hub' : 'docker',
+  done: saved.done && typeof saved.done === 'object' ? saved.done : {},
+};
+
 function newSecrets() {
-  return {
-    masterKey: generateSecret(32),
-    postgresPassword: generateSecret(24),
-    jwtSecret: generateSecret(32),
-  };
+  return { masterKey: generateSecret(32), postgresPassword: generateSecret(24), jwtSecret: generateSecret(32) };
 }
-
 let secrets = newSecrets();
 
+function modelFromForm() {
+  const choice = $('model-choice').value;
+  return choice === 'custom' ? $('model').value.trim() : choice;
+}
+
 function readOptions() {
-  const form = $('config-form');
-  const data = new FormData(form);
+  const speech = document.querySelector('input[name="speech"]:checked')?.value || 'ha';
+  const memoryOn = $('memory-on').checked;
   return {
-    model: String(data.get('model') || '').trim(),
-    speech: String(data.get('speech') || 'ha'),
-    openaiKey: String(data.get('openaiKey') || '').trim(),
-    languages: String(data.get('languages') || 'en').replace(/\s+/g, ''),
-    memoryUrl: String(data.get('memoryUrl') || '').trim(),
-    memoryKey: String(data.get('memoryKey') || '').trim(),
+    model: modelFromForm(),
+    speech,
+    openaiKey: $('openaiKey').value.trim(),
+    languages: $('languages').value.replace(/\s+/g, '') || 'en',
+    memoryUrl: memoryOn ? $('memoryUrl').value.trim() : '',
+    memoryKey: memoryOn ? $('memoryKey').value.trim() : '',
     saveTurns: $('saveTurns').checked,
-    instructions: String(data.get('instructions') || '').trim() || DEFAULTS.instructions,
+    instructions: $('instructions').value.trim() || DEFAULTS.instructions,
   };
+}
+
+function persist() {
+  save({
+    path: state.path,
+    done: state.done,
+    speech: document.querySelector('input[name="speech"]:checked')?.value,
+    modelChoice: $('model-choice').value,
+    model: $('model').value,
+    host: $('host').value,
+    languages: $('languages').value,
+    instructions: $('instructions').value,
+    memoryOn: $('memory-on').checked,
+    saveTurns: $('saveTurns').checked,
+  });
 }
 
 function escapeHtml(text) {
@@ -99,7 +157,7 @@ function highlight(text) {
     .map((line) => {
       if (line.startsWith('#')) return `<span class="c">${escapeHtml(line)}</span>`;
       const eq = line.indexOf('=');
-      if (eq > 0 && !line.startsWith(' ')) {
+      if (eq > 0 && !line.startsWith(' ') && /^[A-Z_]+$/.test(line.slice(0, eq))) {
         return `<span class="k">${escapeHtml(line.slice(0, eq))}</span>=${escapeHtml(line.slice(eq + 1))}`;
       }
       return escapeHtml(line);
@@ -117,11 +175,37 @@ function showErrors(errors) {
     $(errorId).textContent = errors[key] || '';
     for (const input of inputs) $(input).setAttribute('aria-invalid', errors[key] ? 'true' : 'false');
   }
+  // A model error lives inside "More options"; open it so the message is seen.
+  if (errors.model) $('custom-model-field').closest('details').open = true;
+}
+
+// ── Rendering ───────────────────────────────────────────────────────────────
+function renderPath() {
+  for (const radio of document.querySelectorAll('input[name="path"]')) radio.checked = radio.value === state.path;
+  for (const step of document.querySelectorAll('.step')) {
+    step.hidden = !step.dataset.path.split(' ').includes(state.path);
+  }
+  renderProgress();
+}
+
+function renderProgress() {
+  const { done, total } = progress(state.path, state.done);
+  $('progress-text').textContent = `${done} of ${total} done`;
+  $('progress-fill').style.width = `${Math.round((done / total) * 100)}%`;
+  for (const box of document.querySelectorAll('input[data-done]')) {
+    const id = box.dataset.done;
+    box.checked = Boolean(state.done[id]);
+    box.closest('.step').classList.toggle('is-done', box.checked);
+  }
 }
 
 function render() {
   const options = readOptions();
+  const choice = MODEL_CHOICES.find((m) => m.id === $('model-choice').value) || MODEL_CHOICES[0];
+  $('model-note').textContent = choice.note;
+  $('custom-model-field').hidden = choice.id !== 'custom';
   $('openai-field').hidden = !(options.speech === 'openai' || options.model.startsWith('openai:'));
+  $('memory-fields').hidden = !$('memory-on').checked;
   showErrors(validate(options));
 
   const env = buildEnv(options, secrets);
@@ -136,34 +220,32 @@ function render() {
     .map((row) => `<tr><td>${escapeHtml(row.slot)}</td><td>${escapeHtml(row.pick)}</td></tr>`)
     .join('');
 
+  const host = cleanHost($('host').value);
+  $('host-value').textContent = host || "your computer's address";
+  $('copy-host').dataset.copy = host;
+  if (!$('serverUrl').dataset.touched) $('serverUrl').value = serverUrlForHost(host);
   renderCurl();
+  persist();
 }
 
 function renderCurl() {
-  const text = curlChecks($('serverUrl').value, '').join('\n');
+  const text = curlChecks($('serverUrl').value || serverUrlForHost($('host').value), '').join('\n');
   $('curl-output').textContent = text;
   $('curl-output').dataset.raw = text;
 }
 
-async function copyFrom(outputId, button) {
-  const text = $(outputId).dataset.raw || $(outputId).textContent;
-  const label = button.textContent;
+// ── Actions ─────────────────────────────────────────────────────────────────
+async function copyText(text, what) {
   try {
     await navigator.clipboard.writeText(text);
-    button.textContent = 'Copied';
+    toast(`Copied ${what}`);
   } catch {
-    const range = document.createRange();
-    range.selectNodeContents($(outputId));
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    button.textContent = 'Selected, press Ctrl+C';
+    toast('Select the text and copy it');
   }
-  setTimeout(() => (button.textContent = label), 1800);
 }
 
-function download(filename, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+function saveFile(filename, text, type = 'text/plain') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
@@ -171,6 +253,24 @@ function download(filename, text) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function downloadCompose() {
+  try {
+    const res = await fetch('/compose.yml', { cache: 'no-cache' });
+    if (!res.ok) throw new Error(String(res.status));
+    saveFile('compose.yml', await res.text(), 'text/yaml');
+    toast('Saved compose.yml');
+  } catch {
+    window.location.href = '/compose.yml';
+  }
+}
+
+function markDone(id, value) {
+  state.done[id] = value;
+  renderProgress();
+  persist();
+  if (value) sweep(1);
 }
 
 // ── Checker ─────────────────────────────────────────────────────────────────
@@ -192,10 +292,11 @@ async function fetchJson(url, headers = {}) {
 }
 
 function renderResults(rows) {
+  const label = { ok: 'ok', warn: 'check', fail: 'fix' };
   $('check-results').innerHTML = rows
     .map(
       (row) =>
-        `<li class="result ${row.state}"><span class="pill">${row.state === 'ok' ? 'ok' : row.state === 'warn' ? 'check' : 'fix'}</span>` +
+        `<li class="result ${row.state}"><span class="pill">${label[row.state]}</span>` +
         `<span class="result-label">${escapeHtml(row.label)}</span>` +
         `<span class="result-detail">${escapeHtml(row.detail)}</span></li>`
     )
@@ -217,7 +318,6 @@ async function runCheck(event) {
   notice.textContent = 'Checking…';
   notice.className = 'notice';
   $('check-run').disabled = true;
-
   try {
     let health = null;
     try {
@@ -234,7 +334,7 @@ async function runCheck(event) {
       return;
     }
     let status = null;
-    let code = 0;
+    let code = 401;
     if (key) {
       try {
         const res = await fetchJson(`${url}/v1/status`, { Authorization: `Bearer ${key}` });
@@ -243,43 +343,93 @@ async function runCheck(event) {
       } catch {
         code = 0;
       }
-    } else {
-      code = 401;
     }
-    renderResults(interpretStatus(health, status, code));
+    const rows = interpretStatus(health, status, code);
+    renderResults(rows);
     notice.textContent = key ? '' : 'Add your MASTER_API_KEY to see the full check.';
+    if (rows.every((r) => r.state === 'ok')) markDone('check', true);
   } finally {
     $('check-run').disabled = false;
   }
 }
 
 // ── Wire up ─────────────────────────────────────────────────────────────────
+function restoreForm() {
+  const select = $('model-choice');
+  select.innerHTML = MODEL_CHOICES.map((m) => `<option value="${m.id}">${escapeHtml(m.label)}</option>`).join('');
+  if (saved.modelChoice && MODEL_CHOICES.some((m) => m.id === saved.modelChoice)) select.value = saved.modelChoice;
+  if (saved.model) $('model').value = saved.model;
+  if (saved.speech) {
+    const radio = document.querySelector(`input[name="speech"][value="${saved.speech}"]`);
+    if (radio) radio.checked = true;
+  }
+  if (saved.host) $('host').value = saved.host;
+  if (saved.languages) $('languages').value = saved.languages;
+  $('instructions').value = saved.instructions || DEFAULTS.instructions;
+  $('memory-on').checked = Boolean(saved.memoryOn);
+  if (saved.saveTurns === false) $('saveTurns').checked = false;
+}
+
 function init() {
-  startRing();
-  $('instructions').value = DEFAULTS.instructions;
+  buildRing();
+  setTimeout(() => sweep(2), 500);
+  restoreForm();
 
-  $('config-form').addEventListener('input', render);
-  $('config-form').addEventListener('change', render);
-  $('config-form').addEventListener('submit', (e) => e.preventDefault());
-
-  for (const radio of document.querySelectorAll('input[name="install"]')) {
+  for (const radio of document.querySelectorAll('input[name="path"]')) {
     radio.addEventListener('change', () => {
-      $('hub-note').hidden = !$('install-hub').checked;
+      state.path = radio.value;
+      renderPath();
+      persist();
     });
   }
+  for (const box of document.querySelectorAll('input[data-done]')) {
+    box.addEventListener('change', () => markDone(box.dataset.done, box.checked));
+  }
+  $('reset-progress').addEventListener('click', () => {
+    state.done = {};
+    renderProgress();
+    persist();
+    document.getElementById('setup').scrollIntoView();
+  });
+
+  const setup = document.getElementById('setup');
+  setup.addEventListener('input', (e) => {
+    if (e.target.closest('#check-form')) return;
+    render();
+  });
+  setup.addEventListener('change', (e) => {
+    if (e.target.closest('#check-form') || e.target.matches('input[data-done], input[name="path"]')) return;
+    render();
+  });
+  $('config-form').addEventListener('submit', (e) => e.preventDefault());
 
   $('regen').addEventListener('click', () => {
     secrets = newSecrets();
     render();
+    toast('New keys generated');
   });
-  $('copy-env').addEventListener('click', (e) => copyFrom('env-output', e.currentTarget));
-  $('copy-cmds').addEventListener('click', (e) => copyFrom('cmd-output', e.currentTarget));
-  $('copy-curl').addEventListener('click', (e) => copyFrom('curl-output', e.currentTarget));
-  $('download-env').addEventListener('click', () => download('.env', $('env-output').dataset.raw));
+  $('download-env').addEventListener('click', () => {
+    saveFile('.env', $('env-output').dataset.raw);
+    toast('Saved .env');
+  });
+  $('download-compose').addEventListener('click', downloadCompose);
+  $('copy-env').addEventListener('click', () => copyText($('env-output').dataset.raw, '.env'));
+  $('copy-cmds').addEventListener('click', () => copyText($('cmd-output').dataset.raw, 'commands'));
+  $('copy-curl').addEventListener('click', () => copyText($('curl-output').dataset.raw, 'commands'));
+  $('copy-host').addEventListener('click', () => {
+    const host = $('copy-host').dataset.copy;
+    if (host) copyText(host, 'host');
+    else $('host').focus();
+  });
+  $('copy-port').addEventListener('click', () => copyText('10700', 'port'));
 
-  $('serverUrl').addEventListener('input', renderCurl);
+  $('serverUrl').addEventListener('input', () => {
+    $('serverUrl').dataset.touched = '1';
+    renderCurl();
+  });
   $('check-form').addEventListener('submit', runCheck);
 
+  renderPath();
   render();
 }
 

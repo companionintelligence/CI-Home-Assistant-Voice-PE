@@ -26,6 +26,51 @@ export const SPEECH_OPTIONS = {
   },
 };
 
+export const HUB_INSTALL_URL = 'https://hub.ci.computer/install#ci-ha-voice';
+
+// My Home Assistant redirects open the viewer's own Home Assistant on the right screen.
+export const HA_LINKS = {
+  addWyoming: 'https://my.home-assistant.io/redirect/config_flow_start/?domain=wyoming',
+  voiceAssistants: 'https://my.home-assistant.io/redirect/voice_assistants/',
+  devices: 'https://my.home-assistant.io/redirect/devices/',
+};
+
+// Small models answer fastest, which matters more for voice than for chat.
+export const MODEL_CHOICES = [
+  { id: 'ollama:llama3.2', label: 'Llama 3.2, 3B', note: 'Smallest and fastest. A good first choice.' },
+  { id: 'ollama:gemma3:4b', label: 'Gemma 3, 4B', note: 'Natural phrasing, still quick.' },
+  { id: 'ollama:llama3.1:8b', label: 'Llama 3.1, 8B', note: 'Better answers. Needs more memory and a faster machine.' },
+  { id: 'custom', label: 'Something else', note: 'Enter any Ollama, OpenAI or vLLM model tag under More options.' },
+];
+
+// The steps each path walks through, in order.
+export const STEPS = {
+  docker: ['choose', 'memory', 'files', 'start', 'ha', 'pipeline', 'check'],
+  hub: ['hub-install', 'hub-memory', 'ha', 'pipeline', 'check'],
+};
+
+/** How far along a path is, given a map of step id to done. */
+export function progress(path, done) {
+  const steps = STEPS[path] || STEPS.docker;
+  const count = steps.filter((id) => Boolean(done?.[id])).length;
+  return { done: count, total: steps.length };
+}
+
+/** A host someone typed ("http://192.168.1.20:8080/") reduced to "192.168.1.20". */
+export function cleanHost(raw) {
+  return String(raw ?? '')
+    .trim()
+    .replace(/^[a-z]+:\/\//i, '')
+    .replace(/[/?#].*$/, '')
+    .replace(/:\d+$/, '');
+}
+
+/** The ci-server address on a host, for the checker and curl lines. */
+export function serverUrlForHost(host) {
+  const h = cleanHost(host);
+  return h ? `http://${h}:${API_PORT}` : '';
+}
+
 export const SPEACHES_STT_MODEL = 'Systran/faster-distil-whisper-small.en';
 export const SPEACHES_TTS_MODEL = 'speaches-ai/Kokoro-82M-v1.0-ONNX';
 export const SPEACHES_VOICES = ['af_heart', 'af_bella', 'am_adam', 'bf_emma'];

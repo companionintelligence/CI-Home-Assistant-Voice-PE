@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#0c7466"/>
+      <stop offset="1" stop-color="#05a3a0"/>
+    </linearGradient>
+    <radialGradient id="tileLight" cx="0.25" cy="0.12" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#1b3f49"/>
+      <stop offset="1" stop-color="#081c24"/>
+    </linearGradient>
+    <linearGradient id="bodyEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b6f79"/>
+      <stop offset="1" stop-color="#0b2630"/>
+    </linearGradient>
+    <radialGradient id="dial" cx="0.42" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#15343f"/>
+      <stop offset="1" stop-color="#06161d"/>
+    </radialGradient>
+    <radialGradient id="button" cx="0.4" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#244c57"/>
+      <stop offset="1" stop-color="#0b2029"/>
+    </radialGradient>
+    <linearGradient id="arcgrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00a9a7"/>
+      <stop offset="1" stop-color="#9ff0e3"/>
+    </linearGradient>
+    <filter id="arcblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="ledglow" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="drop" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#021017" flood-opacity="0.5"/>
+    </filter>
+    <filter id="inset" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset dy="4"/><feGaussianBlur stdDeviation="5" result="o"/>
+      <feComposite in="SourceGraphic" in2="o" operator="out" result="inv"/>
+      <feFlood flood-color="#000" flood-opacity="0.55"/><feComposite in2="inv" operator="in" result="sh"/>
+      <feComposite in="sh" in2="SourceGraphic" operator="in"/>
+      <feMerge><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#tile)"/>
+  <rect width="512" height="512" rx="112" fill="url(#tileLight)"/>
+
+  <!-- device body: rounded square, like the Voice PE seen from above -->
+  <g filter="url(#drop)">
+    <rect x="76" y="76" width="360" height="360" rx="96" fill="url(#bodyEdge)"/>
+  </g>
+  <rect x="80" y="80" width="352" height="352" rx="92" fill="url(#body)"/>
+
+  <!-- rotary dial with knurled rim -->
+  <circle cx="256" cy="256" r="156" fill="#0a222c" stroke="#2a5d68" stroke-width="3"/>
+  <g stroke="#2f6773" stroke-width="3" stroke-linecap="round" opacity="0.9"><line x1="256.0" y1="114.0" x2="256.0" y2="104.0"/><line x1="270.8" y1="114.8" x2="271.9" y2="104.8"/><line x1="285.5" y1="117.1" x2="287.6" y2="107.3"/><line x1="299.9" y1="120.9" x2="303.0" y2="111.4"/><line x1="313.8" y1="126.3" x2="317.8" y2="117.1"/><line x1="327.0" y1="133.0" x2="332.0" y2="124.4"/><line x1="339.5" y1="141.1" x2="345.3" y2="133.0"/><line x1="351.0" y1="150.5" x2="357.7" y2="143.0"/><line x1="361.5" y1="161.0" x2="369.0" y2="154.3"/><line x1="370.9" y1="172.5" x2="379.0" y2="166.7"/><line x1="379.0" y1="185.0" x2="387.6" y2="180.0"/><line x1="385.7" y1="198.2" x2="394.9" y2="194.2"/><line x1="391.1" y1="212.1" x2="400.6" y2="209.0"/><line x1="394.9" y1="226.5" x2="404.7" y2="224.4"/><line x1="397.2" y1="241.2" x2="407.2" y2="240.1"/><line x1="398.0" y1="256.0" x2="408.0" y2="256.0"/><line x1="397.2" y1="270.8" x2="407.2" y2="271.9"/><line x1="394.9" y1="285.5" x2="404.7" y2="287.6"/><line x1="391.1" y1="299.9" x2="400.6" y2="303.0"/><line x1="385.7" y1="313.8" x2="394.9" y2="317.8"/><line x1="379.0" y1="327.0" x2="387.6" y2="332.0"/><line x1="370.9" y1="339.5" x2="379.0" y2="345.3"/><line x1="361.5" y1="351.0" x2="369.0" y2="357.7"/><line x1="351.0" y1="361.5" x2="357.7" y2="369.0"/><line x1="339.5" y1="370.9" x2="345.3" y2="379.0"/><line x1="327.0" y1="379.0" x2="332.0" y2="387.6"/><line x1="313.8" y1="385.7" x2="317.8" y2="394.9"/><line x1="299.9" y1="391.1" x2="303.0" y2="400.6"/><line x1="285.5" y1="394.9" x2="287.6" y2="404.7"/><line x1="270.8" y1="397.2" x2="271.9" y2="407.2"/><line x1="256.0" y1="398.0" x2="256.0" y2="408.0"/><line x1="241.2" y1="397.2" x2="240.1" y2="407.2"/><line x1="226.5" y1="394.9" x2="224.4" y2="404.7"/><line x1="212.1" y1="391.1" x2="209.0" y2="400.6"/><line x1="198.2" y1="385.7" x2="194.2" y2="394.9"/><line x1="185.0" y1="379.0" x2="180.0" y2="387.6"/><line x1="172.5" y1="370.9" x2="166.7" y2="379.0"/><line x1="161.0" y1="361.5" x2="154.3" y2="369.0"/><line x1="150.5" y1="351.0" x2="143.0" y2="357.7"/><line x1="141.1" y1="339.5" x2="133.0" y2="345.3"/><line x1="133.0" y1="327.0" x2="124.4" y2="332.0"/><line x1="126.3" y1="313.8" x2="117.1" y2="317.8"/><line x1="120.9" y1="299.9" x2="111.4" y2="303.0"/><line x1="117.1" y1="285.5" x2="107.3" y2="287.6"/><line x1="114.8" y1="270.8" x2="104.8" y2="271.9"/><line x1="114.0" y1="256.0" x2="104.0" y2="256.0"/><line x1="114.8" y1="241.2" x2="104.8" y2="240.1"/><line x1="117.1" y1="226.5" x2="107.3" y2="224.4"/><line x1="120.9" y1="212.1" x2="111.4" y2="209.0"/><line x1="126.3" y1="198.2" x2="117.1" y2="194.2"/><line x1="133.0" y1="185.0" x2="124.4" y2="180.0"/><line x1="141.1" y1="172.5" x2="133.0" y2="166.7"/><line x1="150.5" y1="161.0" x2="143.0" y2="154.3"/><line x1="161.0" y1="150.5" x2="154.3" y2="143.0"/><line x1="172.5" y1="141.1" x2="166.7" y2="133.0"/><line x1="185.0" y1="133.0" x2="180.0" y2="124.4"/><line x1="198.2" y1="126.3" x2="194.2" y2="117.1"/><line x1="212.1" y1="120.9" x2="209.0" y2="111.4"/><line x1="226.5" y1="117.1" x2="224.4" y2="107.3"/><line x1="241.2" y1="114.8" x2="240.1" y2="104.8"/></g>
+  <circle cx="256" cy="256" r="138" fill="url(#dial)" stroke="#051218" stroke-width="3"/>
+
+  <!-- LED ring -->
+  <path d="M164.2,203.0 A106,106 0 0,1 347.8,203.0" fill="none" stroke="url(#arcgrad)" stroke-width="30" stroke-linecap="round" opacity="0.55" filter="url(#arcblur)"/>
+  <circle cx="256.0" cy="150.0" r="12.5" fill="#dff7f1" fill-opacity="0.92" filter="url(#ledglow)"/><circle cx="309.0" cy="164.2" r="12.5" fill="#dff7f1" fill-opacity="1.00" filter="url(#ledglow)"/><circle cx="347.8" cy="203.0" r="12.5" fill="#dff7f1" fill-opacity="0.75" filter="url(#ledglow)"/><circle cx="362.0" cy="256.0" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="347.8" cy="309.0" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="309.0" cy="347.8" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="256.0" cy="362.0" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="203.0" cy="347.8" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="164.2" cy="309.0" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="150.0" cy="256.0" r="10" fill="#0e3a45" stroke="#1d5360" stroke-width="2"/><circle cx="164.2" cy="203.0" r="12.5" fill="#dff7f1" fill-opacity="0.64" filter="url(#ledglow)"/><circle cx="203.0" cy="164.2" r="12.5" fill="#dff7f1" fill-opacity="0.78" filter="url(#ledglow)"/>
+
+  <!-- center action button -->
+  <circle cx="256" cy="256" r="52" fill="url(#button)" stroke="#2a5d68" stroke-width="3"/>
+  <circle cx="256" cy="252" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="4"/>
+  <circle cx="256" cy="256" r="9" fill="#c5e8dc"/>
+</svg>
