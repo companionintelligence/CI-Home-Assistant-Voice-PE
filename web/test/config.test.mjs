@@ -157,3 +157,46 @@ test('interpretStatus explains auth failures and missing pieces', () => {
   assert.equal(byLabel['Speech-to-text'].state, 'warn');
   assert.equal(byLabel['Companion Memory'].state, 'fail');
 });
+
+test('progress counts only the steps on the chosen path', async () => {
+  const { progress, STEPS } = await import('../public/config.js');
+  assert.deepEqual(progress('docker', {}), { done: 0, total: STEPS.docker.length });
+  assert.deepEqual(progress('hub', { 'hub-install': true, files: true, ha: true }), { done: 2, total: 5 });
+  assert.deepEqual(progress('nonsense', { choose: true }), { done: 1, total: 7 });
+});
+
+test('cleanHost and serverUrlForHost accept whatever people paste', async () => {
+  const { cleanHost, serverUrlForHost } = await import('../public/config.js');
+  assert.equal(cleanHost(' http://192.168.1.20:8080/health '), '192.168.1.20');
+  assert.equal(cleanHost('homelab.local'), 'homelab.local');
+  assert.equal(cleanHost(''), '');
+  assert.equal(serverUrlForHost('homelab.local:10700'), 'http://homelab.local:8080');
+  assert.equal(serverUrlForHost('  '), '');
+});
+
+test('model choices are valid tags, with one escape hatch', async () => {
+  const { MODEL_CHOICES, validate } = await import('../public/config.js');
+  const tags = MODEL_CHOICES.filter((m) => m.id !== 'custom');
+  assert.ok(tags.length >= 2);
+  for (const m of tags) assert.deepEqual(validate({ model: m.id, speech: 'ha' }), {}, m.id);
+  assert.equal(MODEL_CHOICES.at(-1).id, 'custom');
+  assert.equal(MODEL_CHOICES[0].id, 'ollama:llama3.2');
+});
+
+test('Home Assistant links use the My Home Assistant redirects', async () => {
+  const { HA_LINKS } = await import('../public/config.js');
+  assert.equal(HA_LINKS.addWyoming, 'https://my.home-assistant.io/redirect/config_flow_start/?domain=wyoming');
+  assert.match(HA_LINKS.voiceAssistants, /\/redirect\/voice_assistants\/$/);
+});
+
+test('every step the page renders is on some path', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { STEPS } = await import('../public/config.js');
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const onPage = [...html.matchAll(/data-step="([^"]+)"/g)].map((m) => m[1]);
+  const known = new Set([...STEPS.docker, ...STEPS.hub]);
+  assert.deepEqual(onPage.filter((id) => !known.has(id)), []);
+  for (const id of known) assert.ok(onPage.includes(id), `no step element for ${id}`);
+  const doneBoxes = [...html.matchAll(/data-done="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual([...doneBoxes].sort(), [...onPage].sort());
+});
