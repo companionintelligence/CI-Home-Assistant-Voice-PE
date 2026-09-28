@@ -21,8 +21,11 @@ export const config = {
   // Redis
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
 
-  // Ollama
-  ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+  // Default LLM backend: Ollama or any OpenAI-compatible server. Companion Hub
+  // injects CI_LLM_BASE_URL (its inference pool, ending in /v1) and
+  // CI_LLM_API_KEY; OLLAMA_BASE_URL wins when both are set.
+  ollamaBaseUrl: baseUrl(process.env.OLLAMA_BASE_URL || process.env.CI_LLM_BASE_URL) || 'http://localhost:11434',
+  llmApiKey: process.env.CI_LLM_API_KEY || '',
 
   // OpenAI upstream (optional fallback)
   openaiApiKey: process.env.OPENAI_API_KEY || '',
@@ -31,8 +34,10 @@ export const config = {
   // vLLM (optional)
   vllmBaseUrl: process.env.VLLM_BASE_URL || '',
 
-  // Model used when a client does not name one
-  defaultModel: process.env.CI_MODEL || 'ollama:llama3.2',
+  // Model used when a client does not name one. Companion Hub hands out
+  // CI_CHAT_MODEL (a bare engine id) for the model it recommends.
+  defaultModel:
+    process.env.CI_MODEL || (process.env.CI_CHAT_MODEL ? `ollama:${process.env.CI_CHAT_MODEL}` : 'ollama:llama3.2'),
 
   // Speech-to-text: any OpenAI-compatible server (speaches, Companion Hub
   // inference, faster-whisper-server, ...). Takes priority over OpenAI.

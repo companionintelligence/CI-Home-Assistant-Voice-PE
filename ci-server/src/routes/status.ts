@@ -8,10 +8,18 @@ import { resolveProvider } from '../providers';
 
 const router = Router();
 
+/**
+ * Reachability, not a model check: any HTTP answer below 500 means the backend
+ * is up. Companion Hub's inference pool, for one, has no GET /v1/models.
+ */
 async function checkLlm(): Promise<{ ok: boolean; error?: string }> {
   try {
-    await axios.get(`${config.ollamaBaseUrl}/v1/models`, { timeout: 2000 });
-    return { ok: true };
+    const res = await axios.get(`${config.ollamaBaseUrl}/v1/models`, {
+      timeout: 2000,
+      headers: config.llmApiKey ? { Authorization: `Bearer ${config.llmApiKey}` } : {},
+      validateStatus: (status) => status < 500,
+    });
+    return { ok: true, ...(res.status >= 400 ? { error: `HTTP ${res.status} from /v1/models` } : {}) };
   } catch (err) {
     return { ok: false, error: (err as Error).message };
   }

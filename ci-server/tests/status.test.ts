@@ -53,3 +53,43 @@ describe('Private Network Access preflight', () => {
     expect(res.headers['access-control-allow-origin']).toBe('*');
   });
 });
+
+describe('Companion Hub inference variables', () => {
+  it('uses CI_LLM_BASE_URL, CI_LLM_API_KEY and CI_CHAT_MODEL when nothing more specific is set', async () => {
+    // Hub's pool has chat completions but no GET /v1/models.
+    const pool = await startStub((req, res) => {
+      if (req.url === '/api/inference/pool/v1/chat/completions') {
+        return sendJson(res, 200, {
+          id: 'c1',
+          model: 'qwen3:4b',
+          choices: [{ message: { role: 'assistant', content: 'Hi.' }, finish_reason: 'stop' }],
+        });
+      }
+      sendJson(res, 404, { message: 'Not Found' });
+    });
+    const app = appWithEnv({
+      OLLAMA_BASE_URL: '',
+      CI_MODEL: '',
+      CI_LLM_BASE_URL: `${pool.url}/api/inference/pool/v1`,
+      CI_LLM_API_KEY: 'hub-key',
+      CI_CHAT_MODEL: 'qwen3:4b',
+    });
+
+    const status = await request(app).get('/v1/status').set(AUTH);
+    expect(status.body.default_model).toBe('ollama:qwen3:4b');
+    expect(status.body.llm).toMatchObject({ provider: 'ollama', ok: true });
+
+    const reply = await request(app)
+      .post('/v1/responses')
+      .set(AUTH)
+      .send({ model: status.body.default_model, input: 'Hello' });
+    await pool.close();
+
+    expect(reply.status).toBe(200);
+    expect(reply.body.output_text).toBe('Hi.');
+    const chat = pool.requests.find((r) => r.url.endsWith('/chat/completions'))!;
+    expect(chat.headers.authorization).toBe('Bearer hub-key');
+    expect((chat.json as { model: string }).model).toBe('qwen3:4b');
+  });
+});
+

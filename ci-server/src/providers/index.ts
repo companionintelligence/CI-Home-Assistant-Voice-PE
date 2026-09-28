@@ -80,6 +80,8 @@ function createAxiosInstance(provider: ProviderName): AxiosInstance {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (provider === 'openai' && config.openaiApiKey) {
     headers['Authorization'] = `Bearer ${config.openaiApiKey}`;
+  } else if (provider === 'ollama' && config.llmApiKey) {
+    headers['Authorization'] = `Bearer ${config.llmApiKey}`;
   }
   return axios.create({ baseURL: getProviderBaseUrl(provider), headers });
 }

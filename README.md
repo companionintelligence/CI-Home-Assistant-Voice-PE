@@ -113,13 +113,17 @@ without saving. If memory is slow or down, the assistant still answers.
 
 ### Run under Companion Hub
 
-Point ci-server at Hub's inference instead of the bundled Ollama and speech:
+Install **Home Assistant Voice** (`ci-ha-voice`, listed in CI-Marketplace) from
+the Hub store. Hub wires it up without a `.env`:
 
-```bash
-OLLAMA_BASE_URL=http://ci-hub:5002/api/inference/pool
-STT_BASE_URL=http://ci-hub:5002/api/inference
-TTS_BASE_URL=http://ci-hub:5002/api/inference
-```
+- **Model**: Hub injects `CI_LLM_BASE_URL`, `CI_LLM_API_KEY` and `CI_CHAT_MODEL`
+  for its inference pool; ci-server uses them when `OLLAMA_BASE_URL` and
+  `CI_MODEL` are unset.
+- **Memory**: Hub's connect flow mints a Companion Memory key limited to the
+  `memory` scope and injects `CI_MEMORY_URL` and `CI_MEMORY_API_KEY`.
+- **Speech**: keep Home Assistant's own Whisper and Piper, or set `STT_BASE_URL`
+  and `TTS_BASE_URL` to `http://ci-hub:5002/api/inference` to use Hub's engines
+  (needs Hub with multipart transcription, companionintelligence/CI-Hub#1643).
 
 ## API
 
