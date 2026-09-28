@@ -1,0 +1,17 @@
+{
+  "name": "ci-ha-voice-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Setup site for Companion Voice for Home Assistant, served at https://ha.ci.computer",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test \"test/*.test.mjs\"",
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.142.0",
+    "yaml": "^2.9.1"
+  }
+}

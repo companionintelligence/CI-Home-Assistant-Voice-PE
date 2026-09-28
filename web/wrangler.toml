@@ -1,0 +1,17 @@
+# Companion Voice setup site: https://ha.ci.computer
+# Assets-only Worker. Everything in ./public is served as-is; security headers
+# live in public/_headers.
+name = "ci-ha-voice-setup"
+compatibility_date = "2026-09-22"
+workers_dev = true
+
+[assets]
+directory = "./public"
+not_found_handling = "404-page"
+
+# Custom Domain: Cloudflare creates the DNS record and certificate on deploy.
+# Needs the ci.computer zone in the same account and no existing record for
+# ha.ci.computer.
+[[routes]]
+pattern = "ha.ci.computer"
+custom_domain = true

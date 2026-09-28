@@ -1,0 +1,85 @@
+# Companion Voice for Home Assistant
+# https://ha.ci.computer
+#
+# Put this file next to the .env the setup page generates, then:
+#   docker compose -f compose.yml up -d
+# Add --profile local-audio to also run speaches for local speech-to-text and
+# text-to-speech.
+#
+# Home Assistant connects to the voice bridge on TCP port 10700 through its
+# Wyoming Protocol integration.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  speaches:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    profiles: ["local-audio"]
+    restart: unless-stopped
+    volumes:
+      - speaches_models:/home/ubuntu/.cache/huggingface/hub
+    ports:
+      - "8000:8000"
+
+  ci-server:
+    image: ghcr.io/companionintelligence/ci-ha-voice-server:latest
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      MASTER_API_KEY: ${MASTER_API_KEY?MASTER_API_KEY must be set}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CI_MODEL: ${CI_MODEL:-ollama:llama3.2}
+      STT_BASE_URL: ${STT_BASE_URL:-}
+      STT_API_KEY: ${STT_API_KEY:-}
+      STT_MODEL: ${STT_MODEL:-}
+      TTS_BASE_URL: ${TTS_BASE_URL:-}
+      TTS_API_KEY: ${TTS_API_KEY:-}
+      TTS_MODEL: ${TTS_MODEL:-}
+      CI_MEMORY_URL: ${CI_MEMORY_URL:-}
+      CI_MEMORY_API_KEY: ${CI_MEMORY_API_KEY:-}
+      CI_MEMORY_RECALL: ${CI_MEMORY_RECALL:-true}
+      CI_MEMORY_SAVE_TURNS: ${CI_MEMORY_SAVE_TURNS:-true}
+    ports:
+      - "8080:8080"
+
+  voice-bridge:
+    image: ghcr.io/companionintelligence/ci-ha-voice-bridge:latest
+    restart: unless-stopped
+    depends_on:
+      ci-server:
+        condition: service_healthy
+    environment:
+      CI_SERVER_URL: http://ci-server:8080
+      CI_SERVER_API_KEY: ${MASTER_API_KEY?MASTER_API_KEY must be set}
+      CI_MODEL: ${CI_MODEL:-ollama:llama3.2}
+      CI_STT_MODEL: ${CI_STT_MODEL:-whisper-1}
+      CI_TTS_MODEL: ${CI_TTS_MODEL:-tts-1}
+      CI_TTS_VOICE: ${CI_TTS_VOICE:-alloy}
+      CI_TTS_VOICES: ${CI_TTS_VOICES:-}
+      LANGUAGES: ${LANGUAGES:-en}
+      VOICE_BRIDGE_HOST: 0.0.0.0
+      VOICE_BRIDGE_PORT: 10700
+      WYOMING_ZEROCONF: ${WYOMING_ZEROCONF:-false}
+      SYSTEM_INSTRUCTIONS: ${SYSTEM_INSTRUCTIONS:-You are a concise smart home voice assistant. Answer in one or two sentences.}
+    ports:
+      - "10700:10700"
+
+volumes:
+  ollama_models:
+  speaches_models:
