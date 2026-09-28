@@ -18,14 +18,14 @@ Home Assistant Voice PE integration for Companion Intelligence — voice pipelin
 
 ## Tech stack
 
-- Python / Home Assistant
-- YAML configuration
+- `voice-bridge/`: Python 3.12 Wyoming server for Home Assistant
+- `ci-server/`: Node 20 / TypeScript / Express OpenAI-compatible facade
+- `web/`: https://ha.ci.computer setup site on Cloudflare Workers
 
 ## Development
 
 ```bash
-pip install -r requirements.txt   # install
-pytest   # test
+scripts/test-all.sh   # every check
 ```
 
 

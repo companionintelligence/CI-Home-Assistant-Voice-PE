@@ -1,118 +1,56 @@
-"""Audio utilities – PCM buffering, VAD logic, and WAV conversion."""
+"""Audio helpers: PCM to WAV for STT uploads, and WAV to PCM chunks for TTS playback."""
 from __future__ import annotations
 
 import io
-import struct
 import wave
-from collections import deque
-from typing import Deque, Optional
+from dataclasses import dataclass
 
-# ---------------------------------------------------------------------------
-# VAD constants (simple energy-based fallback)
-# ---------------------------------------------------------------------------
-SILENCE_THRESHOLD = 200          # RMS below this → silence
-SILENCE_TIMEOUT_FRAMES = 20      # consecutive silent frames before VAD=false
-MAX_BUFFER_FRAMES = 500          # hard cap (~10 s at 20 ms/frame @ 16 kHz)
-FRAME_DURATION_MS = 20           # ms per audio chunk
+# Format ci-server STT backends expect, and what HA streams by default.
+STT_RATE = 16000
+STT_WIDTH = 2
+STT_CHANNELS = 1
 
 
-class RingBuffer:
-    """
-    Fixed-capacity ring buffer for PCM audio frames (bytes).
-    Oldest frames are dropped when capacity is exceeded.
-    """
-
-    def __init__(self, maxlen: int = MAX_BUFFER_FRAMES) -> None:
-        self._buf: Deque[bytes] = deque(maxlen=maxlen)
-
-    def push(self, frame: bytes) -> None:
-        self._buf.append(frame)
-
-    def drain(self) -> list[bytes]:
-        frames = list(self._buf)
-        self._buf.clear()
-        return frames
-
-    def __len__(self) -> int:
-        return len(self._buf)
-
-    @property
-    def is_empty(self) -> bool:
-        return len(self._buf) == 0
-
-
-def rms(pcm_bytes: bytes) -> float:
-    """Compute root-mean-square of Int16 PCM samples."""
-    if not pcm_bytes:
-        return 0.0
-    num_samples = len(pcm_bytes) // 2
-    if num_samples == 0:
-        return 0.0
-    samples = struct.unpack(f"<{num_samples}h", pcm_bytes[:num_samples * 2])
-    sq_sum = sum(s * s for s in samples)
-    return (sq_sum / num_samples) ** 0.5
-
-
-class VoiceActivityDetector:
-    """
-    Simple energy-based VAD.
-    Returns True (speech detected) / False (silence) based on RMS energy.
-    """
-
-    def __init__(
-        self,
-        threshold: float = SILENCE_THRESHOLD,
-        silence_timeout: int = SILENCE_TIMEOUT_FRAMES,
-    ) -> None:
-        self._threshold = threshold
-        self._silence_timeout = silence_timeout
-        self._silent_frames = 0
-        self._speech_started = False
-
-    @property
-    def speech_active(self) -> bool:
-        return self._speech_started
-
-    def process(self, pcm_bytes: bytes) -> bool:
-        """
-        Feed a PCM frame. Returns True if speech is currently active.
-        Transitions:
-          - silence → speech when RMS > threshold
-          - speech → silence after silence_timeout consecutive silent frames
-        """
-        energy = rms(pcm_bytes)
-        if energy >= self._threshold:
-            self._silent_frames = 0
-            self._speech_started = True
-        else:
-            self._silent_frames += 1
-            if self._silent_frames >= self._silence_timeout:
-                self._speech_started = False
-
-        return self._speech_started
-
-    def reset(self) -> None:
-        self._silent_frames = 0
-        self._speech_started = False
-
-
-def pcm_to_wav(pcm_frames: list[bytes], sample_rate: int = 16000, channels: int = 1) -> bytes:
-    """
-    Concatenate Int16 PCM frames and wrap in a WAV container.
-
-    Args:
-        pcm_frames: list of raw PCM byte strings (Int16 LE)
-        sample_rate: audio sample rate in Hz
-        channels: number of audio channels (1 = mono)
-
-    Returns:
-        WAV-encoded bytes ready for upload to STT endpoint.
-    """
-    raw = b"".join(pcm_frames)
+def pcm_to_wav(
+    pcm: bytes, sample_rate: int = STT_RATE, width: int = STT_WIDTH, channels: int = STT_CHANNELS
+) -> bytes:
+    """Wrap raw little-endian PCM in a WAV container, ready for upload to an STT endpoint."""
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
         wf.setnchannels(channels)
-        wf.setsampwidth(2)          # 16-bit = 2 bytes per sample
+        wf.setsampwidth(width)
         wf.setframerate(sample_rate)
-        wf.writeframes(raw)
+        wf.writeframes(pcm)
     return buf.getvalue()
+
+
+@dataclass(frozen=True)
+class DecodedWav:
+    rate: int
+    width: int
+    channels: int
+    pcm: bytes
+
+
+def wav_to_pcm(wav_bytes: bytes) -> DecodedWav:
+    """
+    Decode a WAV file into raw PCM plus its format.
+
+    Raises ValueError if the bytes are not a WAV file (for example an MP3 from a
+    TTS backend that ignored the requested response_format).
+    """
+    if wav_bytes[:4] != b"RIFF" or wav_bytes[8:12] != b"WAVE":
+        raise ValueError("TTS audio is not WAV; configure the TTS backend to return wav")
+    with wave.open(io.BytesIO(wav_bytes), "rb") as wf:
+        return DecodedWav(
+            rate=wf.getframerate(),
+            width=wf.getsampwidth(),
+            channels=wf.getnchannels(),
+            pcm=wf.readframes(wf.getnframes()),
+        )
+
+
+def chunk_pcm(pcm: bytes, width: int, channels: int, samples_per_chunk: int = 1024) -> list[bytes]:
+    """Split PCM into chunks aligned to whole sample frames."""
+    step = samples_per_chunk * width * channels
+    return [pcm[i : i + step] for i in range(0, len(pcm), step)]

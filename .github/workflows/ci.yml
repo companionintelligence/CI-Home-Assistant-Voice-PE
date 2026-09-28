@@ -1,0 +1,101 @@
+name: CI
+
+# Gated like the rest of the org's workflows: pushes do not start hosted runs.
+# Run scripts/test-all.sh locally, or dispatch this workflow:
+#   gh workflow run ci.yml --repo companionintelligence/CI-Home-Assistant-Voice-PE --ref <branch>
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ci-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ci-server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --silent
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-server-dist
+          path: ci-server/dist
+          retention-days: 1
+
+  voice-bridge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voice-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: voice-bridge/requirements*.txt
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  stack-e2e:
+    needs: ci-server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ci-server/package-lock.json
+      - run: npm ci --omit=dev
+        working-directory: ci-server
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-server-dist
+          path: ci-server/dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: voice-bridge/requirements*.txt
+      - run: pip install -r voice-bridge/requirements.txt -r voice-bridge/requirements-dev.txt
+      - run: python -m pytest e2e -q
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npx wrangler deploy --dry-run --outdir .wrangler/dry-run
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: printf 'MASTER_API_KEY=x\nPOSTGRES_PASSWORD=x\n' > ci.env
+      - run: docker compose --env-file ci.env config --quiet
+      - run: docker compose --env-file ci.env -f web/public/compose.yml config --quiet

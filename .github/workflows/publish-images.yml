@@ -1,0 +1,60 @@
+name: Publish images
+
+# Builds the two containers that compose.yml and Companion Hub pull:
+#   ghcr.io/companionintelligence/ci-ha-voice-server
+#   ghcr.io/companionintelligence/ci-ha-voice-bridge
+# for linux/amd64 and linux/arm64. Runs on version tags, or on demand:
+#   gh workflow run publish-images.yml --repo companionintelligence/CI-Home-Assistant-Voice-PE --ref main
+#
+# After the first publish, set both packages' visibility to public in the
+# organization's package settings so people and Hub can pull them without a login.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image: ci-ha-voice-server
+            context: ci-server
+          - image: ci-ha-voice-bridge
+            context: voice-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/companionintelligence/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image }}
+            org.opencontainers.image.vendor=Companion Intelligence
+            org.opencontainers.image.url=https://ha.ci.computer
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

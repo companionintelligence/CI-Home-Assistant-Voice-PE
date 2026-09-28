@@ -16,32 +16,44 @@ Home Assistant Voice PE integration for Companion Intelligence — voice pipelin
 
 ## Stack
 
-- Python / Home Assistant
-- YAML configuration
+- `voice-bridge/`: Python 3.12, asyncio, `wyoming` (Wyoming TCP server for Home Assistant)
+- `ci-server/`: Node 20, TypeScript, Express (OpenAI-compatible facade)
+- `web/`: static site for https://ha.ci.computer, deployed as a Cloudflare Worker with wrangler
+- Docker Compose for the full stack
 
 ## Key commands
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Everything, the way CI runs it
+scripts/test-all.sh
 
-# Start development server / service
-# start Home Assistant
+# voice-bridge
+cd voice-bridge && pip install -r requirements.txt -r requirements-dev.txt && python -m pytest
 
-# Run tests
-pytest
+# ci-server
+cd ci-server && npm ci && npm run typecheck && npm test && npm run build
 
-# Build for production
-# no build
+# whole stack (needs ci-server/dist)
+python -m pytest e2e
+
+# setup site
+cd web && npm ci && npm test && npm run check   # check = wrangler dry run
+
+# run the stack
+docker compose up -d
 ```
 
-## Package manager
+## Package managers
 
-**pip** — use exclusively; do not mix with npm/yarn/pnpm/bun unless the repo explicitly requires it.
+**pip** for `voice-bridge/`, **npm** for `ci-server/` and `web/` (each has its own
+lockfile). Do not introduce yarn, pnpm or bun.
 
 ## Cross-repo connections
 
-- Integrates Home Assistant voice pipeline with CI-Server LLM endpoint
+- Home Assistant connects to `voice-bridge` over Wyoming (TCP 10700)
+- `ci-server` grounds answers in CI-Server (Companion Memory) via `/memory/context`,
+  `/memory/recall` and saves turns with `/memory/turn` (memory-scoped API key)
+- Under Companion Hub, `ci-server` can use Hub's inference pool and audio routes
 
 
 

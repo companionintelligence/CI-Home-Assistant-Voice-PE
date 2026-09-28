@@ -5,6 +5,7 @@ import { chatCompletion, streamChatCompletion } from '../providers';
 import { logger } from '../logger';
 import { makeOpenAIError } from '../types';
 import { config } from '../config';
+import { applyMemory, lastUserText, saveTurn } from '../memory';
 
 const router = Router();
 
@@ -23,6 +24,16 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   const canonical = normalizeChatRequest(body);
   canonical.requestId = (req.headers['x-request-id'] as string) || uuidv4();
 
+  const userText = lastUserText(canonical);
+  const remember = (assistantText: string) =>
+    void saveTurn({
+      userText,
+      assistantText,
+      sessionId: canonical.metadata?.session_id,
+      platform: canonical.metadata?.platform,
+    });
+  await applyMemory(canonical);
+
   if (canonical.stream) {
     // Set up SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
@@ -38,16 +49,25 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       }
     }, config.sseHeartbeatIntervalMs);
 
+    let fullContent = '';
     try {
       await streamChatCompletion(
         canonical,
         (chunk: string) => {
+          try {
+            const delta = (JSON.parse(chunk) as { choices?: Array<{ delta?: { content?: string } }> })
+              .choices?.[0]?.delta?.content;
+            if (delta) fullContent += delta;
+          } catch {
+            // forward malformed chunks untouched
+          }
           if (!res.writableEnded) {
             res.write(`data: ${chunk}\n\n`);
           }
         },
         () => {
           clearInterval(heartbeat);
+          remember(fullContent);
           if (!res.writableEnded) {
             res.write('data: [DONE]\n\n');
             res.end();
@@ -70,6 +90,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   } else {
     try {
       const result = await chatCompletion(canonical);
+      remember(result.message?.content || '');
 
       // Format as OpenAI chat completion response
       res.json({

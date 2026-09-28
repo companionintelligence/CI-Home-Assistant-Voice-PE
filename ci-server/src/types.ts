@@ -43,6 +43,8 @@ export interface CanonicalRequest {
   tools?: CanonicalToolDefinition[];
   params: CanonicalParams;
   stream: boolean;
+  /** Free-form string metadata from the client (e.g. session_id, platform). */
+  metadata?: Record<string, string>;
 }
 
 export interface CanonicalDelta {

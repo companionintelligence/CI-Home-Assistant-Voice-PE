@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { listModels } from '../providers';
+import { config } from '../config';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
       ? upstream
       : [
           {
-            id: 'ollama:llama2',
+            id: config.defaultModel,
             object: 'model',
             created: Math.floor(Date.now() / 1000),
             owned_by: 'ollama',

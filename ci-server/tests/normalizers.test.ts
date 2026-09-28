@@ -99,3 +99,22 @@ describe('normalizeResponsesRequest', () => {
     expect(result.conversationId).toBe('resp_abc123');
   });
 });
+
+describe('content parts and metadata', () => {
+  it('flattens typed content parts to text', () => {
+    const result = normalizeResponsesRequest({
+      model: 'ollama:llama3.2',
+      input: [{ role: 'user', content: [{ type: 'input_text', text: 'Hello ' }, { type: 'input_text', text: 'there' }] }],
+    });
+    expect(result.messages[0].content).toBe('Hello there');
+  });
+
+  it('keeps only string metadata', () => {
+    const result = normalizeChatRequest({
+      model: 'ollama:llama3.2',
+      messages: [],
+      metadata: { session_id: 'abc', count: 3 },
+    });
+    expect(result.metadata).toEqual({ session_id: 'abc' });
+  });
+});

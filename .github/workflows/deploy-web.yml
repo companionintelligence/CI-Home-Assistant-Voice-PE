@@ -1,0 +1,67 @@
+name: Deploy ha.ci.computer
+
+# Publishes web/ as the Cloudflare Worker `ci-ha-voice-setup` on the custom
+# domain ha.ci.computer. Runs when web/ changes on main (about a minute), or
+# on demand:
+#   gh workflow run deploy-web.yml --repo companionintelligence/CI-Home-Assistant-Voice-PE --ref main
+#
+# Needs repository (or organization) secrets:
+#   CLOUDFLARE_API_TOKEN   token with Workers Scripts:Edit, Workers Routes:Edit
+#                          and DNS:Edit on the ci.computer zone
+#   CLOUDFLARE_ACCOUNT_ID  the Companion Intelligence Cloudflare account
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ha.ci.computer
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Cloudflare secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          missing=0
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::CLOUDFLARE_API_TOKEN secret is not set"; missing=1; }
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::CLOUDFLARE_ACCOUNT_ID secret is not set"; missing=1; }
+          exit $missing
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
+      - name: Smoke test
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS https://ha.ci.computer/ | grep -q "Companion Voice for Home Assistant"; then
+              curl -fsS https://ha.ci.computer/compose.yml | grep -q "ci-ha-voice-bridge" && echo "ha.ci.computer is live" && exit 0
+            fi
+            sleep 10
+          done
+          echo "::warning::ha.ci.computer did not answer yet; a new custom domain certificate can take a few minutes"

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
@@ -19,11 +17,11 @@ services:
       retries: 5
 
   # ── Redis ───────────────────────────────────────────────────────────────────
+  # Not published to the host: Redis has no auth here, and only ci-server
+  # needs it (over the compose network).
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -39,10 +37,25 @@ services:
     ports:
       - "11434:11434"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      # The ollama image has no curl; the CLI talks to the local server.
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # ── Local speech (optional, `--profile local-audio`) ────────────────────────
+  # speaches: OpenAI-compatible faster-whisper STT + Kokoro/Piper TTS.
+  # After first start, download the models once:
+  #   curl -X POST http://localhost:8000/v1/models/Systran/faster-distil-whisper-small.en
+  #   curl -X POST http://localhost:8000/v1/models/speaches-ai/Kokoro-82M-v1.0-ONNX
+  speaches:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    profiles: ["local-audio"]
+    restart: unless-stopped
+    volumes:
+      - speaches_models:/home/ubuntu/.cache/huggingface/hub
+    ports:
+      - "8000:8000"
 
   # ── ci-server (OpenAI-compatible façade) ────────────────────────────────────
   ci-server:
@@ -62,20 +75,27 @@ services:
       PORT: 8080
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ci_voice}
       REDIS_URL: redis://redis:6379
-      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       MASTER_API_KEY: ${MASTER_API_KEY?MASTER_API_KEY must be set}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CI_MODEL: ${CI_MODEL:-ollama:llama3.2}
+      STT_BASE_URL: ${STT_BASE_URL:-}
+      STT_API_KEY: ${STT_API_KEY:-}
+      STT_MODEL: ${STT_MODEL:-}
+      TTS_BASE_URL: ${TTS_BASE_URL:-}
+      TTS_API_KEY: ${TTS_API_KEY:-}
+      TTS_MODEL: ${TTS_MODEL:-}
+      CI_MEMORY_URL: ${CI_MEMORY_URL:-}
+      CI_MEMORY_API_KEY: ${CI_MEMORY_API_KEY:-}
+      CI_MEMORY_RECALL: ${CI_MEMORY_RECALL:-true}
+      CI_MEMORY_SAVE_TURNS: ${CI_MEMORY_SAVE_TURNS:-true}
     ports:
       - "8080:8080"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
+    # Healthcheck is defined in ci-server/Dockerfile (Node fetch; the image has no curl).
 
-  # ── Voice Bridge (Wyoming ↔ ci-server relay) ─────────────────────────────────
+  # ── Voice Bridge (Wyoming server for Home Assistant) ───────────────────────
   voice-bridge:
     build:
       context: ./voice-bridge
@@ -87,15 +107,22 @@ services:
     environment:
       CI_SERVER_URL: http://ci-server:8080
       CI_SERVER_API_KEY: ${MASTER_API_KEY?MASTER_API_KEY must be set}
-      CI_MODEL: ${CI_MODEL:-ollama:llama2}
+      CI_MODEL: ${CI_MODEL:-ollama:llama3.2}
+      CI_STT_MODEL: ${CI_STT_MODEL:-whisper-1}
+      CI_TTS_MODEL: ${CI_TTS_MODEL:-tts-1}
+      CI_TTS_VOICE: ${CI_TTS_VOICE:-alloy}
+      CI_TTS_VOICES: ${CI_TTS_VOICES:-}
+      LANGUAGES: ${LANGUAGES:-en}
       VOICE_BRIDGE_HOST: 0.0.0.0
       VOICE_BRIDGE_PORT: 10700
-      SAMPLE_RATE: 16000
-      SYSTEM_INSTRUCTIONS: >
-        You are a concise smart home voice assistant. Answer in 1-2 sentences.
+      # mDNS discovery needs host networking; leave off under the default bridge network.
+      WYOMING_ZEROCONF: ${WYOMING_ZEROCONF:-false}
+      SYSTEM_INSTRUCTIONS: ${SYSTEM_INSTRUCTIONS:-You are a concise smart home voice assistant. Answer in one or two sentences.}
     ports:
+      # Wyoming is plain TCP. Point Home Assistant's Wyoming integration here.
       - "10700:10700"
 
 volumes:
   postgres_data:
   ollama_models:
+  speaches_models:

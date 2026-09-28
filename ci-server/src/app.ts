@@ -10,11 +10,23 @@ import chatRouter from './routes/chat';
 import responsesRouter from './routes/responses';
 import audioRouter from './routes/audio';
 import speechRouter from './routes/speech';
+import statusRouter from './routes/status';
+import { VERSION } from './version';
 
 export function createApp(): express.Application {
   const app = express();
 
   // ── Global middleware ─────────────────────────────────────────────────────
+  // Private Network Access: lets a public HTTPS page (the ha.ci.computer setup
+  // checker) reach a ci-server on a private address. Registered before cors()
+  // because cors() answers the preflight itself.
+  app.use((req, res, next) => {
+    if (req.headers['access-control-request-private-network'] === 'true') {
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    next();
+  });
+
   app.use(
     cors({
       origin: config.corsOrigins.includes('*') ? '*' : config.corsOrigins,
@@ -49,15 +61,16 @@ export function createApp(): express.Application {
 
   // ── Health check (unauthenticated) ────────────────────────────────────────
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', version: '1.0.0' });
+    res.json({ status: 'ok', version: VERSION });
   });
 
   // ── OpenAI-compatible v1 routes (authenticated) ───────────────────────────
   app.use('/v1/models', authMiddleware, modelsRouter);
   app.use('/v1/chat/completions', authMiddleware, chatRouter);
   app.use('/v1/responses', authMiddleware, responsesRouter);
-  app.use('/v1/audio', authMiddleware, audioRouter);
   app.use('/v1/audio/speech', authMiddleware, speechRouter);
+  app.use('/v1/audio', authMiddleware, audioRouter);
+  app.use('/v1/status', authMiddleware, statusRouter);
 
   // ── Error handler ─────────────────────────────────────────────────────────
   app.use(errorHandler);

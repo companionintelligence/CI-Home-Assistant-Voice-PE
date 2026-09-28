@@ -5,6 +5,7 @@ import FormData from 'form-data';
 import { config } from '../config';
 import { logger } from '../logger';
 import { makeOpenAIError } from '../types';
+import { authHeaders, resolveSttProvider } from '../providers/audio';
 
 const router = Router();
 
@@ -13,10 +14,13 @@ const upload = multer({
   limits: { fileSize: config.maxAudioSizeBytes },
 });
 
+/** Optional OpenAI transcription fields forwarded verbatim when present. */
+const PASSTHROUGH_FIELDS = ['language', 'prompt', 'response_format', 'temperature'];
+
 /**
  * POST /v1/audio/transcriptions
  * Accept multipart/form-data with an audio file and return a transcript.
- * Proxies to OpenAI Whisper or a local STT provider.
+ * Proxies to a local OpenAI-compatible STT server (STT_BASE_URL) or OpenAI Whisper.
  */
 router.post(
   '/transcriptions',
@@ -29,46 +33,48 @@ router.post(
       return;
     }
 
-    const model = (req.body as Record<string, string>).model || 'whisper-1';
-    const language = (req.body as Record<string, string>).language || undefined;
+    const fields = req.body as Record<string, string>;
+    const requestedModel = fields.model || 'whisper-1';
+    const provider = resolveSttProvider(requestedModel);
 
+    if (provider.kind === 'none') {
+      logger.warn('Transcription requested but no STT provider is configured');
+      res.status(503).json(
+        makeOpenAIError(
+          'No speech-to-text provider is configured. Set STT_BASE_URL or OPENAI_API_KEY.',
+          'server_error',
+          'stt_not_configured'
+        )
+      );
+      return;
+    }
+
+    const model = provider.kind === 'local' && config.sttModel ? config.sttModel : requestedModel;
     logger.debug('Transcription request', {
-      filename: req.file.originalname,
+      provider: provider.kind,
       size: req.file.size,
       model,
     });
 
+    const form = new FormData();
+    form.append('file', req.file.buffer, {
+      filename: req.file.originalname || 'audio.wav',
+      contentType: req.file.mimetype || 'audio/wav',
+    });
+    form.append('model', model);
+    for (const field of PASSTHROUGH_FIELDS) {
+      if (fields[field]) form.append(field, fields[field]);
+    }
+
     try {
-      // Route to OpenAI Whisper if the model is whisper-* and we have an API key,
-      // otherwise return a stub (useful for testing without credentials).
-      if (model.startsWith('whisper') && config.openaiApiKey) {
-        const form = new FormData();
-        form.append('file', req.file.buffer, {
-          filename: req.file.originalname || 'audio.wav',
-          contentType: req.file.mimetype,
-        });
-        form.append('model', model);
-        if (language) form.append('language', language);
-
-        const upstream = await axios.post(
-          `${config.openaiBaseUrl}/v1/audio/transcriptions`,
-          form,
-          {
-            headers: {
-              ...form.getHeaders(),
-              Authorization: `Bearer ${config.openaiApiKey}`,
-            },
-          }
-        );
-
-        res.json(upstream.data);
-      } else {
-        // Local stub – in production replace with Whisper.cpp / Vosk / Soniox
-        logger.warn('No upstream STT configured, returning stub transcript');
-        res.json({ text: '', language: language || 'en' });
-      }
+      const upstream = await axios.post(`${provider.baseUrl}/v1/audio/transcriptions`, form, {
+        headers: { ...form.getHeaders(), ...authHeaders(provider) },
+        timeout: 120000,
+        maxBodyLength: config.maxAudioSizeBytes * 2,
+      });
+      res.json(upstream.data);
     } catch (err) {
-      logger.error('Transcription error', { error: (err as Error).message });
+      logger.error('Transcription error', { provider: provider.kind, error: (err as Error).message });
       res.status(502).json(
         makeOpenAIError('Transcription service error', 'server_error', 'transcription_error')
       );

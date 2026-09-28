@@ -3,26 +3,38 @@ import axios from 'axios';
 import { config } from '../config';
 import { logger } from '../logger';
 import { makeOpenAIError } from '../types';
+import { authHeaders, resolveTtsProvider } from '../providers/audio';
 
 const router = Router();
 
-const SUPPORTED_FORMATS = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
-const SUPPORTED_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+const MIME_TYPES: Record<string, string> = {
+  mp3: 'audio/mpeg',
+  opus: 'audio/opus',
+  aac: 'audio/aac',
+  flac: 'audio/flac',
+  wav: 'audio/wav',
+  pcm: 'audio/pcm',
+};
+const SUPPORTED_FORMATS = Object.keys(MIME_TYPES);
+const OPENAI_VOICES = ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer'];
+// Local engines name voices freely (af_heart, en_US-lessac-medium, ...).
+const VOICE_PATTERN = /^[\w.:-]{1,100}$/;
 
 /**
  * POST /v1/audio/speech
- * Convert text to speech and return audio bytes.
+ * Convert text to speech and return audio bytes. Routes to a local
+ * OpenAI-compatible TTS server (TTS_BASE_URL) or OpenAI.
  */
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   const body = req.body as Record<string, unknown>;
 
-  const model = (body.model as string) || 'tts-1';
   const input = body.input as string;
   const voice = (body.voice as string) || 'alloy';
-  const format = (body.format as string) || 'mp3';
+  // OpenAI names this field response_format; `format` is kept for older clients.
+  const format = (body.response_format as string) || (body.format as string) || 'mp3';
   const speed = (body.speed as number) || 1.0;
 
-  if (!input) {
+  if (!input || typeof input !== 'string') {
     res.status(400).json(
       makeOpenAIError("'input' is required", 'invalid_request_error', 'missing_required_parameter', 'input')
     );
@@ -41,57 +53,48 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  if (!SUPPORTED_VOICES.includes(voice)) {
+  const provider = resolveTtsProvider();
+  const voiceOk =
+    provider.kind === 'openai' ? OPENAI_VOICES.includes(voice) : VOICE_PATTERN.test(voice);
+  if (!voiceOk) {
     res.status(400).json(
+      makeOpenAIError(`Unsupported voice '${voice}'.`, 'invalid_request_error', 'invalid_voice', 'voice')
+    );
+    return;
+  }
+
+  if (provider.kind === 'none') {
+    logger.warn('Speech requested but no TTS provider is configured');
+    res.status(503).json(
       makeOpenAIError(
-        `Unsupported voice '${voice}'.`,
-        'invalid_request_error',
-        'invalid_voice',
-        'voice'
+        'No text-to-speech provider is configured. Set TTS_BASE_URL or OPENAI_API_KEY.',
+        'server_error',
+        'tts_not_configured'
       )
     );
     return;
   }
 
-  logger.debug('Speech synthesis request', { model, voice, format, inputLength: input.length });
+  const model =
+    provider.kind === 'local' && config.ttsModel ? config.ttsModel : (body.model as string) || 'tts-1';
+  logger.debug('Speech synthesis request', { provider: provider.kind, model, voice, format, inputLength: input.length });
 
   try {
-    if (config.openaiApiKey) {
-      // Proxy to OpenAI TTS
-      const upstream = await axios.post(
-        `${config.openaiBaseUrl}/v1/audio/speech`,
-        { model, input, voice, speed, response_format: format },
-        {
-          headers: {
-            Authorization: `Bearer ${config.openaiApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          responseType: 'arraybuffer',
-        }
-      );
-
-      const mimeTypes: Record<string, string> = {
-        mp3: 'audio/mpeg',
-        opus: 'audio/opus',
-        aac: 'audio/aac',
-        flac: 'audio/flac',
-        wav: 'audio/wav',
-        pcm: 'audio/pcm',
-      };
-
-      res.setHeader('Content-Type', mimeTypes[format] || 'audio/mpeg');
-      res.send(Buffer.from(upstream.data as ArrayBuffer));
-    } else {
-      // Stub: return a minimal valid response when no TTS is configured
-      logger.warn('No TTS provider configured, returning empty audio stub');
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.send(Buffer.alloc(0));
-    }
-  } catch (err) {
-    logger.error('Speech synthesis error', { error: (err as Error).message });
-    res.status(502).json(
-      makeOpenAIError('TTS service error', 'server_error', 'speech_error')
+    const upstream = await axios.post(
+      `${provider.baseUrl}/v1/audio/speech`,
+      { model, input, voice, speed, response_format: format },
+      {
+        headers: { ...authHeaders(provider), 'Content-Type': 'application/json' },
+        responseType: 'arraybuffer',
+        timeout: 60000,
+      }
     );
+
+    res.setHeader('Content-Type', MIME_TYPES[format]);
+    res.send(Buffer.from(upstream.data as ArrayBuffer));
+  } catch (err) {
+    logger.error('Speech synthesis error', { provider: provider.kind, error: (err as Error).message });
+    res.status(502).json(makeOpenAIError('TTS service error', 'server_error', 'speech_error'));
   }
 });
 
