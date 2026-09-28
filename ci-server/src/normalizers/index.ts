@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { config } from '../config';
 import {
   CanonicalRequest,
   CanonicalMessage,
@@ -7,18 +8,46 @@ import {
 } from '../types';
 
 /**
+ * Message content may be a plain string or an array of typed parts
+ * ({type: 'text' | 'input_text' | 'output_text', text}). Flatten to text.
+ */
+export function contentToText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        const text = (part as Record<string, unknown> | null)?.text;
+        return typeof text === 'string' ? text : '';
+      })
+      .join('');
+  }
+  return '';
+}
+
+/** Keep only string-valued metadata entries. */
+function stringMetadata(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === 'string') out[k] = v;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
  * Adapter for the OpenAI Chat Completions format.
  * Maps { model, messages, tools, stream, ...params } → CanonicalRequest
  */
 export function normalizeChatRequest(body: Record<string, unknown>): CanonicalRequest {
-  const model = (body.model as string) || 'ollama:llama2';
+  const model = (body.model as string) || config.defaultModel;
   const stream = Boolean(body.stream);
 
   const messages: CanonicalMessage[] = ((body.messages as unknown[]) || []).map((m) => {
     const msg = m as Record<string, unknown>;
     return {
       role: msg.role as CanonicalMessage['role'],
-      content: (msg.content as string) || '',
+      content: contentToText(msg.content),
       toolCallId: msg.tool_call_id as string | undefined,
       toolCalls: msg.tool_calls
         ? (msg.tool_calls as Array<Record<string, unknown>>).map((tc) => ({
@@ -58,6 +87,7 @@ export function normalizeChatRequest(body: Record<string, unknown>): CanonicalRe
     tools,
     params,
     stream,
+    metadata: stringMetadata(body.metadata),
   };
 }
 
@@ -66,7 +96,7 @@ export function normalizeChatRequest(body: Record<string, unknown>): CanonicalRe
  * Maps { model, input, instructions, stream, ...params } → CanonicalRequest
  */
 export function normalizeResponsesRequest(body: Record<string, unknown>): CanonicalRequest {
-  const model = (body.model as string) || 'ollama:llama2';
+  const model = (body.model as string) || config.defaultModel;
   const stream = Boolean(body.stream);
   const instructions = body.instructions as string | undefined;
 
@@ -77,7 +107,7 @@ export function normalizeResponsesRequest(body: Record<string, unknown>): Canoni
   } else if (Array.isArray(body.input)) {
     messages = (body.input as Array<Record<string, unknown>>).map((m) => ({
       role: (m.role as CanonicalMessage['role']) || 'user',
-      content: (m.content as string) || '',
+      content: contentToText(m.content),
     }));
   }
 
@@ -110,5 +140,6 @@ export function normalizeResponsesRequest(body: Record<string, unknown>): Canoni
     params,
     stream,
     conversationId: body.previous_response_id as string | undefined,
+    metadata: stringMetadata(body.metadata),
   };
 }

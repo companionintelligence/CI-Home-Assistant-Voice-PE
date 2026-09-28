@@ -5,6 +5,7 @@ import { chatCompletion, streamChatCompletion } from '../providers';
 import { logger } from '../logger';
 import { makeOpenAIError } from '../types';
 import { config } from '../config';
+import { applyMemory, lastUserText, saveTurn } from '../memory';
 
 const router = Router();
 
@@ -26,6 +27,17 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   const canonical = normalizeResponsesRequest(body);
   canonical.requestId = (req.headers['x-request-id'] as string) || uuidv4();
   const responseId = `resp_${canonical.requestId.replace(/-/g, '').slice(0, 20)}`;
+
+  // Read the utterance before memory adds its system message.
+  const userText = lastUserText(canonical);
+  const remember = (assistantText: string) =>
+    void saveTurn({
+      userText,
+      assistantText,
+      sessionId: canonical.metadata?.session_id || canonical.conversationId,
+      platform: canonical.metadata?.platform,
+    });
+  await applyMemory(canonical);
 
   if (canonical.stream) {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -83,6 +95,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         },
         () => {
           clearInterval(heartbeat);
+          remember(fullContent);
           sendEvent({
             type: 'response.completed',
             response: {
@@ -111,6 +124,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     try {
       const result = await chatCompletion(canonical);
       const outputText = result.message?.content || '';
+      remember(outputText);
 
       res.json({
         id: responseId,
@@ -119,6 +133,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         status: 'completed',
         finish_reason: result.finishReason || 'stop',
         model: canonical.model,
+        output_text: outputText,
         output: [
           {
             type: 'message',

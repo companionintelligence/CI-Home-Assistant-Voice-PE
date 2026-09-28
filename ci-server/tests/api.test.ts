@@ -100,11 +100,11 @@ describe('POST /v1/audio/speech', () => {
     expect(res.body.error.code).toBe('invalid_format');
   });
 
-  it('returns 400 for unsupported voice', async () => {
+  it('returns 400 for a malformed voice name', async () => {
     const res = await request(app)
       .post('/v1/audio/speech')
       .set(AUTH)
-      .send({ model: 'tts-1', input: 'hello', voice: 'invalid-voice', format: 'mp3' });
+      .send({ model: 'tts-1', input: 'hello', voice: 'not a voice!', format: 'mp3' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('invalid_voice');
   });
