@@ -13,6 +13,15 @@ def _bool(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def debug_enabled(env: dict[str, str] | None = None) -> bool:
+    """
+    True when DEBUG asks for debug logging. Only 1, true, yes and on count, the
+    same words WYOMING_ZEROCONF accepts, so DEBUG=0 and DEBUG=false stay quiet.
+    """
+    e = os.environ if env is None else env
+    return _bool(e.get("DEBUG", ""))
+
+
 @dataclass(frozen=True)
 class BridgeConfig:
     """Everything the bridge needs to reach ci-server and describe itself to HA."""
@@ -40,6 +49,13 @@ class BridgeConfig:
     history_ttl_s: float = 300.0
     # Hard cap on buffered STT audio (16 kHz * 2 bytes * 30 s).
     max_audio_bytes: int = 16000 * 2 * 30
+    # Off by default: what people say and what they hear back stays out of the logs.
+    # Turn it on (LOG_TRANSCRIPTS=true) only while troubleshooting.
+    log_transcripts: bool = False
+    # Off by default: Home Assistant is always told about all three services, as it always
+    # was. On (HIDE_UNCONFIGURED_SPEECH=true), each Describe asks ci-server which speech
+    # backends it has and leaves out speech-to-text or text-to-speech when it has none.
+    hide_unconfigured_speech: bool = False
 
     @staticmethod
     def from_env(env: dict[str, str] | None = None) -> "BridgeConfig":
@@ -66,4 +82,6 @@ class BridgeConfig:
             request_timeout_s=float(e.get("CI_REQUEST_TIMEOUT_S", str(defaults.request_timeout_s))),
             history_turns=int(e.get("HISTORY_TURNS", str(defaults.history_turns))),
             history_ttl_s=float(e.get("HISTORY_TTL_S", str(defaults.history_ttl_s))),
+            log_transcripts=_bool(e.get("LOG_TRANSCRIPTS", "false")),
+            hide_unconfigured_speech=_bool(e.get("HIDE_UNCONFIGURED_SPEECH", "false")),
         )

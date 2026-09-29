@@ -13,19 +13,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 from functools import partial
 
 from wyoming.server import AsyncTcpServer
 
 from src.client.ci_client import CIClient
-from src.config import BridgeConfig
+from src.config import BridgeConfig, debug_enabled
 from src.conversation import ConversationStore
 from src.wyoming.handler import CompanionEventHandler
 from src.wyoming.info import build_info
 
 logging.basicConfig(
-    level=logging.DEBUG if os.environ.get("DEBUG") else logging.INFO,
+    level=logging.DEBUG if debug_enabled() else logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("voice-bridge")
