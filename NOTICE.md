@@ -7,14 +7,26 @@ for acknowledgements.
 
 ## Copyleft and reciprocal-licence dependencies
 
-None. Every third-party dependency in this repository is under a permissive
+<!-- hand-authored: do not regenerate this section -->
+One copyleft dependency: [`zeroconf`](https://github.com/python-zeroconf/python-zeroconf) `0.88.0`,
+licensed LGPL-2.1-or-later. The voice bridge installs it through
+`wyoming[zeroconf]` and uses it only when `WYOMING_ZEROCONF` is turned on, to
+advertise the bridge over mDNS. It is installed unmodified from PyPI as a separate
+package, so it can be replaced by installing another version. Its source and
+licence text are at the link above and ship inside the package. Its package
+metadata says only "LGPL"; its source headers name version 2.1 or any later
+version, and its licence file is the LGPL 2.1 text. See
+[THIRD_PARTY.md](THIRD_PARTY.md).
+<!-- end hand-authored -->
+
+Every other third-party dependency in this repository is under a permissive
 licence (MIT, Apache-2.0, ISC, BSD or similar).
 
 ## First-party code
 
 Except as noted above, the contents of this repository are
 Copyright © LifeScope INC, DBA Companion Intelligence (<https://ci.computer>),
-licensed under the terms in [LICENSE](LICENSE) / [LICENSE.md](LICENSE.md).
+licensed under the terms in [LICENSE.md](LICENSE.md).
 
 ---
 

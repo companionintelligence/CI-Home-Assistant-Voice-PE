@@ -9,7 +9,19 @@ Date: 2026-09-28. Owner: Liam.
 | Wyoming bridge, ci-server memory and speech, ha.ci.computer site, tests, workflows | companionintelligence/CI-Home-Assistant-Voice-PE#8 | Draft, all local checks green |
 | Hub audio routes accept OpenAI multipart uploads | companionintelligence/CI-Hub#1643 | Draft, needs a full `ci-local` run |
 | Memory-only connect key for `ci-ha-voice` | companionintelligence/CI-Server#2746 | Draft, needs the Jest suite run |
-| Hub store listing `ci-ha-voice` (hidden) | companionintelligence/CI-Marketplace#1687 | Draft, all 23,749 catalog tests green |
+| Hub store listing `ci-ha-voice` (public, images pinned by digest) | companionintelligence/CI-Marketplace#1687 | Merged 2026-09-28. Later commits on `dev` made the listing public and pinned both images to `sha-d5a7c86` digests. Was a draft with all 23,749 catalog tests green |
+
+> **Update 2026-09-29.** All four pull requests above have since been merged (checked
+> on GitHub on 2026-09-29), so the first three State cells show their 2026-09-28
+> wording. The checklist below is unchanged and was not re-checked: the merges in it
+> have happened, and whether the test runs it mentions were done is not recorded
+> here. Reworking this repository into a general
+> Home Assistant integration, beside the voice path and without renaming or moving
+> anything the voice path publishes, is planned in
+> [the integration rework plan](2026-09-29-ha-integration-rework.md). Separate voice
+> bridge fixes sit unpublished in the working tree and are not approved: see
+> [ADR-0001](../decisions/0001-companion-intelligence-integration.md), section
+> "Voice bridge changes waiting in the working tree".
 
 ## Launch checklist
 

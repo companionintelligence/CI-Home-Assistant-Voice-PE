@@ -20,7 +20,7 @@ to your own Companion Intelligence stack. Say the wake word and the answer comes
 from a local model, grounded in your [Companion Memory](https://github.com/companionintelligence/CI-Server),
 with every word staying in your home.
 
-- **Works with the Home Assistant you have.** It plugs into Assist through the standard Wyoming integration. No custom components.
+- **Works with the Home Assistant you have.** The voice path plugs into Assist through the standard Wyoming integration and needs no custom component. See [how the pieces fit](docs/architecture.md).
 - **Local by default.** Answers from Ollama (or any OpenAI-compatible model), speech from Home Assistant's own Whisper and Piper, or from Companion's.
 - **Remembers.** With a memory-scoped key, each answer draws on what your Companion knows, and each exchange is saved back as a conversation.
 - **Fifteen-minute setup.** The guided page at [ha.ci.computer](https://ha.ci.computer) writes your config, links straight into Home Assistant, and checks the result.
