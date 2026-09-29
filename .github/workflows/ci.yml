@@ -55,6 +55,8 @@ jobs:
   stack-e2e:
     needs: ci-server
     runs-on: ubuntu-latest
+    env:
+      REQUIRE_E2E: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
