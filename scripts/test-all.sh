@@ -14,6 +14,9 @@ python -m pip install -q -r voice-bridge/requirements.txt -r voice-bridge/requir
 (cd voice-bridge && python -m pytest -q)
 
 step "whole stack: real ci-server + real bridge, stubbed upstreams"
+# The build above just made ci-server/dist. Without this, a missing build would
+# skip the suite and still exit 0.
+export REQUIRE_E2E=1
 python -m pytest e2e -q
 
 step "web: setup page logic, compose drift, wrangler dry run"

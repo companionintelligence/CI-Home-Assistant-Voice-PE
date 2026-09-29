@@ -1,6 +1,8 @@
 """The Wyoming `info` answer: which services this bridge offers to Home Assistant."""
 from __future__ import annotations
 
+from dataclasses import replace
+
 from wyoming.info import (
     AsrModel,
     AsrProgram,
@@ -90,3 +92,12 @@ def build_info(config: BridgeConfig) -> Info:
             )
         ],
     )
+
+
+def restrict_info(info: Info, *, stt: bool = True, tts: bool = True) -> Info:
+    """
+    Drop the speech services ci-server cannot back right now. `handle` always stays:
+    the conversation agent does not need STT or TTS, and Home Assistant still needs
+    something to list.
+    """
+    return replace(info, asr=info.asr if stt else [], tts=info.tts if tts else [])

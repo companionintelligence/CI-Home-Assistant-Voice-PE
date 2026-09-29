@@ -6,11 +6,16 @@ aiohttp app. A Wyoming client plays the part of Home Assistant.
 
 Run from the repo root after `npm --prefix ci-server run build`:
     python -m pytest e2e -q
+
+Without ci-server/dist the suite is skipped, unless REQUIRE_E2E or CI is set
+(scripts/test-all.sh and the stack-e2e job set it), where a missing build is a
+failure: a skipped whole-stack test must never read as a green one.
 """
 from __future__ import annotations
 
 import asyncio
 import io
+import json
 import os
 import socket
 import struct
@@ -21,7 +26,7 @@ import wave
 from pathlib import Path
 
 import pytest
-from aiohttp import web
+from aiohttp import ClientSession, ClientTimeout, web
 from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStart, AudioStop
 from wyoming.client import AsyncTcpClient
@@ -32,6 +37,12 @@ from wyoming.tts import Synthesize
 ROOT = Path(__file__).resolve().parent.parent
 MASTER_KEY = "e2e-master-key"
 MEMORY_KEY = "e2e-memory-key"
+FROZEN = json.loads((ROOT / "contracts" / "frozen-surfaces.json").read_text())
+
+
+def env_flag(name: str) -> bool:
+    """True when the variable is set to anything but an empty or false-like value."""
+    return os.environ.get(name, "").strip().lower() not in ("", "0", "false", "no", "off")
 
 
 def free_port() -> int:
@@ -122,7 +133,10 @@ async def wait_for_port(port: int, proc: subprocess.Popen, timeout: float = 20) 
 async def stack():
     dist = ROOT / "ci-server" / "dist" / "index.js"
     if not dist.exists():
-        pytest.skip("build ci-server first: npm --prefix ci-server run build")
+        message = "build ci-server first: npm --prefix ci-server run build"
+        if env_flag("REQUIRE_E2E") or env_flag("CI"):
+            pytest.fail(message, pytrace=False)
+        pytest.skip(message)
 
     upstreams = Upstreams()
     runner = web.AppRunner(upstreams.app())
@@ -264,3 +278,29 @@ async def test_home_assistant_round_trip(stack):
         "sessionId": "ha-conv-1",
         "platform": "ha-voice-pe",
     }
+
+
+async def test_status_key_set_is_frozen(stack):
+    """
+    GET /v1/status is read by the ha.ci.computer checker. The top-level key set
+    is exactly the frozen list, and each nested object keeps its required keys
+    and adds nothing outside the frozen optional ones. contracts/frozen-surfaces.json
+    holds the list; changing it is a deliberate edit of both files.
+    """
+    _, _, server_port = stack
+    spec = FROZEN["status"]
+    async with ClientSession() as session:
+        async with session.get(
+            f"http://127.0.0.1:{server_port}{spec['path']}",
+            headers={"Authorization": f"Bearer {MASTER_KEY}"},
+            timeout=ClientTimeout(total=10),
+        ) as response:
+            assert response.status == 200
+            body = await response.json()
+
+    assert sorted(body) == sorted(spec["fields"])
+    for name, nested in spec["nested"].items():
+        keys = set(body[name])
+        allowed = set(nested["required"]) | set(nested["optional"])
+        assert set(nested["required"]) <= keys, f"{name} lost {set(nested['required']) - keys}"
+        assert keys <= allowed, f"{name} gained {keys - allowed}"

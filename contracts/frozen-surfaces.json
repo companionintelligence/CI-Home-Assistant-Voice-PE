@@ -1,0 +1,261 @@
+{
+  "description": "Public surfaces of the Companion Voice path that must not change by accident. Every value was read from the file the test checks it against. web/test/frozen-surfaces.test.mjs asserts them against the repository, and e2e/test_stack.py pins the /v1/status key set against the running facade. To change one on purpose, edit the file and this JSON in the same pull request (for the three files under frozen_files, that includes their sha256) and say so in its description.",
+  "schema_version": 1,
+  "distribution_decided": false,
+  "frozen_files": {
+    "note": "sha256 of the raw bytes, so a comment, a trailing newline or CRLF line endings count as a change. web/public/compose.yml is served live at https://ha.ci.computer/compose.yml and any change under web/ deploys on merge to main. To change one of these files on purpose, run sha256sum on it and update its value here in the same pull request.",
+    "sha256": {
+      "web/public/compose.yml": "e5ce9eab72eae1675b587aa58a5b1c78698e947811cb8e19a3f550a997817e48",
+      "docker-compose.yml": "0c326cb06f2b1e427df699b327412ea047aa4905917a2320dbde1ff6c8e5892b",
+      ".env.example": "0e552e4676f54d1e7fab09e67bbf008c0fef867b2cce1e44c59dc82d37f517d2"
+    }
+  },
+  "env_readers": {
+    "note": "Renaming an env var in the code that reads it, while the compose files keep passing the old name, would silently ignore a user's setting. Every name the compose files pass to a service listed here must still be read by that service's source, and every .env.example name must be read by one of them or be listed in read_by_other_images. process_env means process.env.NAME, quoted_literal means a quoted \"NAME\" string.",
+    "readers": [
+      { "service": "ci-server", "source": "ci-server/src", "read_as": "process_env" },
+      { "service": "voice-bridge", "source": "voice-bridge/src/config.py", "read_as": "quoted_literal" }
+    ],
+    "read_by_other_images": ["POSTGRES_PASSWORD"]
+  },
+  "wyoming": {
+    "port": 10700,
+    "programs": {
+      "asr": "companion-stt",
+      "tts": "companion-tts",
+      "handle": "companion-conversation"
+    },
+    "zeroconf_name": "companion-voice"
+  },
+  "compose": {
+    "repo": {
+      "file": "docker-compose.yml",
+      "services": {
+        "postgres": {
+          "ports": [],
+          "env": ["POSTGRES_DB", "POSTGRES_PASSWORD", "POSTGRES_USER"]
+        },
+        "redis": {
+          "ports": [],
+          "env": []
+        },
+        "ollama": {
+          "ports": ["11434:11434"],
+          "env": []
+        },
+        "speaches": {
+          "ports": ["8000:8000"],
+          "env": []
+        },
+        "ci-server": {
+          "ports": ["8080:8080"],
+          "env": [
+            "CI_MEMORY_API_KEY",
+            "CI_MEMORY_RECALL",
+            "CI_MEMORY_SAVE_TURNS",
+            "CI_MEMORY_URL",
+            "CI_MODEL",
+            "CORS_ORIGINS",
+            "DATABASE_URL",
+            "JWT_SECRET",
+            "MASTER_API_KEY",
+            "NODE_ENV",
+            "OLLAMA_BASE_URL",
+            "OPENAI_API_KEY",
+            "PORT",
+            "REDIS_URL",
+            "STT_API_KEY",
+            "STT_BASE_URL",
+            "STT_MODEL",
+            "TTS_API_KEY",
+            "TTS_BASE_URL",
+            "TTS_MODEL"
+          ]
+        },
+        "voice-bridge": {
+          "ports": ["10700:10700"],
+          "env": [
+            "CI_MODEL",
+            "CI_SERVER_API_KEY",
+            "CI_SERVER_URL",
+            "CI_STT_MODEL",
+            "CI_TTS_MODEL",
+            "CI_TTS_VOICE",
+            "CI_TTS_VOICES",
+            "LANGUAGES",
+            "SYSTEM_INSTRUCTIONS",
+            "VOICE_BRIDGE_HOST",
+            "VOICE_BRIDGE_PORT",
+            "WYOMING_ZEROCONF"
+          ]
+        }
+      },
+      "build_contexts": {
+        "ci-server": "./ci-server",
+        "voice-bridge": "./voice-bridge"
+      },
+      "fixed_env": {
+        "ci-server": { "PORT": "8080" },
+        "voice-bridge": { "VOICE_BRIDGE_PORT": "10700", "CI_SERVER_URL": "http://ci-server:8080" }
+      },
+      "speaches_profile": "local-audio"
+    },
+    "release": {
+      "file": "web/public/compose.yml",
+      "services": {
+        "ollama": {
+          "ports": [],
+          "env": []
+        },
+        "speaches": {
+          "ports": ["8000:8000"],
+          "env": []
+        },
+        "ci-server": {
+          "ports": ["8080:8080"],
+          "env": [
+            "CI_MEMORY_API_KEY",
+            "CI_MEMORY_RECALL",
+            "CI_MEMORY_SAVE_TURNS",
+            "CI_MEMORY_URL",
+            "CI_MODEL",
+            "CORS_ORIGINS",
+            "JWT_SECRET",
+            "MASTER_API_KEY",
+            "NODE_ENV",
+            "OLLAMA_BASE_URL",
+            "OPENAI_API_KEY",
+            "PORT",
+            "STT_API_KEY",
+            "STT_BASE_URL",
+            "STT_MODEL",
+            "TTS_API_KEY",
+            "TTS_BASE_URL",
+            "TTS_MODEL"
+          ]
+        },
+        "voice-bridge": {
+          "ports": ["10700:10700"],
+          "env": [
+            "CI_MODEL",
+            "CI_SERVER_API_KEY",
+            "CI_SERVER_URL",
+            "CI_STT_MODEL",
+            "CI_TTS_MODEL",
+            "CI_TTS_VOICE",
+            "CI_TTS_VOICES",
+            "LANGUAGES",
+            "SYSTEM_INSTRUCTIONS",
+            "VOICE_BRIDGE_HOST",
+            "VOICE_BRIDGE_PORT",
+            "WYOMING_ZEROCONF"
+          ]
+        }
+      },
+      "images": {
+        "ci-server": "ghcr.io/companionintelligence/ci-ha-voice-server:latest",
+        "voice-bridge": "ghcr.io/companionintelligence/ci-ha-voice-bridge:latest"
+      },
+      "fixed_env": {
+        "ci-server": { "PORT": "8080" },
+        "voice-bridge": { "VOICE_BRIDGE_PORT": "10700", "CI_SERVER_URL": "http://ci-server:8080" }
+      },
+      "speaches_profile": "local-audio"
+    }
+  },
+  "env_example": {
+    "file": ".env.example",
+    "names": [
+      "CI_MEMORY_API_KEY",
+      "CI_MEMORY_RECALL",
+      "CI_MEMORY_SAVE_TURNS",
+      "CI_MEMORY_URL",
+      "CI_MODEL",
+      "CI_TTS_VOICE",
+      "CI_TTS_VOICES",
+      "CORS_ORIGINS",
+      "JWT_SECRET",
+      "LANGUAGES",
+      "MASTER_API_KEY",
+      "OLLAMA_BASE_URL",
+      "OPENAI_API_KEY",
+      "POSTGRES_PASSWORD",
+      "STT_API_KEY",
+      "STT_BASE_URL",
+      "STT_MODEL",
+      "TTS_API_KEY",
+      "TTS_BASE_URL",
+      "TTS_MODEL",
+      "VLLM_BASE_URL",
+      "WYOMING_ZEROCONF"
+    ]
+  },
+  "images": {
+    "workflow": ".github/workflows/publish-images.yml",
+    "registry_prefix": "ghcr.io/companionintelligence/",
+    "matrix": [
+      { "image": "ci-ha-voice-server", "context": "ci-server" },
+      { "image": "ci-ha-voice-bridge", "context": "voice-bridge" }
+    ],
+    "labels": {
+      "org.opencontainers.image.title": "${{ matrix.image }}",
+      "org.opencontainers.image.vendor": "Companion Intelligence",
+      "org.opencontainers.image.url": "https://ha.ci.computer"
+    },
+    "tag_trigger": ["v*"],
+    "tag_rules": [
+      "type=semver,pattern={{version}}",
+      "type=semver,pattern={{major}}.{{minor}}",
+      "type=sha,prefix=sha-"
+    ],
+    "rollback_tag": "sha-d5a7c86"
+  },
+  "store": {
+    "listing": "ci-ha-voice in CI-Marketplace (apps/ci-ha-voice), outside this repository",
+    "id": "ci-ha-voice",
+    "deep_link": "https://hub.ci.computer/install#ci-ha-voice",
+    "service_names": ["ci-ha-voice-server", "ci-ha-voice-bridge"],
+    "hub_env": [
+      "CI_LLM_BASE_URL",
+      "CI_LLM_API_KEY",
+      "CI_CHAT_MODEL",
+      "CI_MEMORY_URL",
+      "CI_MEMORY_API_KEY"
+    ]
+  },
+  "site": {
+    "title": "Companion Voice for Home Assistant",
+    "worker_name": "ci-ha-voice-setup",
+    "assets_directory": "./public",
+    "route": { "pattern": "ha.ci.computer", "custom_domain": true },
+    "deploy_web_greps": ["Companion Voice for Home Assistant", "ci-ha-voice-bridge"],
+    "compose_headers": {
+      "Content-Type": "text/yaml; charset=utf-8",
+      "Content-Disposition": "inline; filename=\"compose.yml\""
+    },
+    "local_storage_key": "ci-ha-voice-setup-v1"
+  },
+  "status": {
+    "path": "/v1/status",
+    "fields": ["version", "default_model", "llm", "stt", "tts", "memory"],
+    "nested": {
+      "llm": { "required": ["provider", "ok"], "optional": ["error"] },
+      "stt": { "required": ["provider", "model"], "optional": [] },
+      "tts": { "required": ["provider", "model"], "optional": [] },
+      "memory": { "required": ["enabled", "recall", "save_turns", "ok"], "optional": ["error"] }
+    }
+  },
+  "memory": {
+    "platform": "ha-voice-pe"
+  },
+  "license": {
+    "file": "LICENSE.md",
+    "required_notice_line": 3,
+    "required_notice": "> Required Notice: Copyright LifeScope INC, DBA Companion Intelligence (https://ci.computer)"
+  },
+  "assets_ignore": {
+    "note": "wrangler reads .assetsignore from the root of the assets directory (site.assets_directory) and uses gitignore rules. The held out line must be exactly this text, and no line may start with ! to re-include it.",
+    "file": "web/public/.assetsignore",
+    "held_out_line": "integration/"
+  }
+}

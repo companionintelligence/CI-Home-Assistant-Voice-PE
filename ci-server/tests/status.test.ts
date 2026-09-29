@@ -56,7 +56,10 @@ describe('Private Network Access preflight', () => {
 
 describe('Companion Hub inference variables', () => {
   it('uses CI_LLM_BASE_URL, CI_LLM_API_KEY and CI_CHAT_MODEL when nothing more specific is set', async () => {
-    // Hub's pool has chat completions but no GET /v1/models.
+    // The stub answers chat completions and a 404 to everything else, GET
+    // /v1/models included. Hub's pool does serve GET /api/inference/pool/v1/models,
+    // but the status check only needs an answer below 500, so a 404 still reads
+    // as reachable.
     const pool = await startStub((req, res) => {
       if (req.url === '/api/inference/pool/v1/chat/completions') {
         return sendJson(res, 200, {

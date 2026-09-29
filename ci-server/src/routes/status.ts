@@ -10,7 +10,9 @@ const router = Router();
 
 /**
  * Reachability, not a model check: any HTTP answer below 500 means the backend
- * is up. Companion Hub's inference pool, for one, has no GET /v1/models.
+ * is up. A 4xx (a 401 without a key, say) still counts and is noted in `error`.
+ * Companion Hub's inference pool does serve GET /api/inference/pool/v1/models,
+ * but the check does not depend on it.
  */
 async function checkLlm(): Promise<{ ok: boolean; error?: string }> {
   try {
