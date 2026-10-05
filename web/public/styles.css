@@ -200,10 +200,18 @@ p { margin: 0; }
 .header-nav a.nav-cta { padding: 0 14px; border-radius: 999px; background: #c5e8dc; color: #041620; font-weight: 700; transition: background-color 140ms ease; }
 .header-nav a.nav-cta:hover { background: #dff4ec; color: #041620; }
 /* The nav shrinks with the screen. Everything it drops is still on the page,
-   and the Buy and Download band sits right under the hero. */
+   and the Buy and Download band sits right under the hero. The Buy Companion
+   Core link is never one of the things it drops: on a phone the nav moves to a
+   second row of the sticky header, so a way to buy is visible without scrolling. */
 @media (max-width: 1040px) { .header-nav .nav-wide { display: none; } }
 @media (max-width: 800px) { .brand span { display: none; } }
-@media (max-width: 640px) { .header-nav .nav-mid, .header-nav .nav-cta { display: none; } }
+@media (max-width: 640px) {
+  html { scroll-padding-top: 92px; }
+  .header-row { gap: 2px 12px; padding-block: 6px; }
+  .header-nav { flex: 1 1 100%; justify-content: space-between; gap: 12px; }
+  .header-nav .nav-mid { display: none; }
+  .header-nav a.nav-cta { margin-left: auto; }
+}
 @media (max-width: 350px) { .header-nav .nav-tiny { display: none; } }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
