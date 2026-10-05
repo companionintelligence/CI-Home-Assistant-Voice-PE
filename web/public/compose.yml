@@ -28,7 +28,9 @@ services:
     volumes:
       - speaches_models:/home/ubuntu/.cache/huggingface/hub
     ports:
-      - "8000:8000"
+      # Only this computer can reach speaches (the setup page downloads its
+      # models from here). ci-server reaches it over the compose network.
+      - "127.0.0.1:8000:8000"
 
   ci-server:
     image: ghcr.io/companionintelligence/ci-ha-voice-server:latest
@@ -41,7 +43,7 @@ services:
       PORT: 8080
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       MASTER_API_KEY: ${MASTER_API_KEY?MASTER_API_KEY must be set}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       CI_MODEL: ${CI_MODEL:-ollama:llama3.2}

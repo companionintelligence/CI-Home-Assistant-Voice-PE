@@ -223,7 +223,12 @@ function render() {
   const host = cleanHost($('host').value);
   $('host-value').textContent = host || "your computer's address";
   $('copy-host').dataset.copy = host;
-  if (!$('serverUrl').dataset.touched) $('serverUrl').value = serverUrlForHost(host);
+  // The page check cannot call a plain http address on the network, so only
+  // pre-fill an address it can reach (localhost); otherwise the curl lines lead.
+  if (!$('serverUrl').dataset.touched) {
+    const guess = serverUrlForHost(host);
+    $('serverUrl').value = browserReachability(guess).ok ? guess : '';
+  }
   renderCurl();
   persist();
 }

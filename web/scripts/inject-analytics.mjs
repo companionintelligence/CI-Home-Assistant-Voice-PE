@@ -6,7 +6,8 @@
 //
 // The CSP in public/_headers only allows scripts from 'self' (plus
 // googletagmanager.com), so the gtag setup lives in /ga-init.js instead of an
-// inline <script>. Safe to run twice.
+// inline <script> (deferred: gtag.js is async and reads the queue either way).
+// Safe to run twice.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +30,7 @@ gtag('config', '${id}');
 export function snippet(id) {
   return `  ${MARKER}
   <script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>
-  <script src="/ga-init.js"></script>
+  <script defer src="/ga-init.js"></script>
 `;
 }
 

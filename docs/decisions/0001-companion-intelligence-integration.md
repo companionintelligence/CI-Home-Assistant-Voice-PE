@@ -182,7 +182,8 @@ Store and Memory
   `CI_MEMORY_API_KEY`, the form fields, the service names `ci-ha-voice-server` and
   `ci-ha-voice-bridge`, `CI_SERVER_URL=http://ci-ha-voice-server:8080`, bridge host
   port 10700, listing port 10780, version 1.1.0 and `min_hub_version` v0.2.41.
-  Also the store deep link `https://hub.ci.computer/install#ci-ha-voice`.
+  Also the store link `https://hub.ci.computer/store/ci-ha-voice` (the setup page first linked
+  `/install#ci-ha-voice`, a route the Hub store does not have; it renders a 404 page).
 - The CI-Server grant for `ci-ha-voice` (scope `memory`, capability `write`).
 
 Repository

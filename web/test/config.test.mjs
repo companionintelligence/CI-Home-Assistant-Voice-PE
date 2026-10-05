@@ -46,7 +46,8 @@ test('buildEnv: Home Assistant speech keeps the file minimal', () => {
   assert.equal(env.CI_MODEL, 'ollama:qwen3:4b');
   assert.equal(env.STT_BASE_URL, undefined);
   assert.equal(env.CI_MEMORY_URL, undefined);
-  assert.equal(env.CORS_ORIGINS, '*');
+  // Only the checker at ha.ci.computer needs to call the server from a browser.
+  assert.equal(env.CORS_ORIGINS, 'https://ha.ci.computer');
 });
 
 test('buildEnv: local speech points both engines at speaches', () => {

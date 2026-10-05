@@ -372,8 +372,10 @@ test('docs/releasing.md documents the rollback tag', async () => {
 
 // Hub store listing
 
-test('store: the deep link to the ci-ha-voice listing', async () => {
-  assert.ok(frozen.store.deep_link.endsWith(`#${frozen.store.id}`));
+test('store: the link to the ci-ha-voice listing', async () => {
+  // The Hub store app has no /install route (it renders "404 Page not found"); a
+  // listing lives at /store/<app id>, which is what the page links to.
+  assert.equal(frozen.store.deep_link, `https://hub.ci.computer/store/${frozen.store.id}`);
   assert.ok((await text('web/public/config.js')).includes(`HUB_INSTALL_URL = '${frozen.store.deep_link}'`));
   assert.ok((await text('web/public/index.html')).includes(`href="${frozen.store.deep_link}"`));
 });
