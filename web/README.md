@@ -12,6 +12,8 @@ step.
 | `public/compose.yml` | The compose file people download; kept in step with `../docker-compose.yml` by a test |
 | `public/_headers` | Security headers and caching, applied by Cloudflare |
 | `public/icon.svg`, `favicon.svg`, `og.png` | Brand art (the Voice PE puck) |
+| `public/favicon.ico`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `site.webmanifest` | Icons and the web manifest, rendered from `icon.svg` and `favicon.svg` |
+| `public/404.html` | The not-found page; carries the same header, Buy and Download band and footer as the home page |
 | `wrangler.toml` | Worker name, assets directory and the `ha.ci.computer` custom domain |
 
 ## Work on it locally

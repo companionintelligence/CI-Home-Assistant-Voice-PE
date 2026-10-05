@@ -5,7 +5,7 @@
   "frozen_files": {
     "note": "sha256 of the raw bytes, so a comment, a trailing newline or CRLF line endings count as a change. web/public/compose.yml is served live at https://ha.ci.computer/compose.yml and any change under web/ deploys on merge to main. To change one of these files on purpose, run sha256sum on it and update its value here in the same pull request.",
     "sha256": {
-      "web/public/compose.yml": "e5ce9eab72eae1675b587aa58a5b1c78698e947811cb8e19a3f550a997817e48",
+      "web/public/compose.yml": "a7dcd081a84f62b6344ec7f3327f4c86f9836ae2ebf103ec5c6aa9cbee81c499",
       "docker-compose.yml": "0c326cb06f2b1e427df699b327412ea047aa4905917a2320dbde1ff6c8e5892b",
       ".env.example": "0e552e4676f54d1e7fab09e67bbf008c0fef867b2cce1e44c59dc82d37f517d2"
     }
@@ -108,7 +108,7 @@
           "env": []
         },
         "speaches": {
-          "ports": ["8000:8000"],
+          "ports": ["127.0.0.1:8000:8000"],
           "env": []
         },
         "ci-server": {
@@ -213,7 +213,7 @@
   "store": {
     "listing": "ci-ha-voice in CI-Marketplace (apps/ci-ha-voice), outside this repository",
     "id": "ci-ha-voice",
-    "deep_link": "https://hub.ci.computer/install#ci-ha-voice",
+    "deep_link": "https://hub.ci.computer/store/ci-ha-voice",
     "service_names": ["ci-ha-voice-server", "ci-ha-voice-bridge"],
     "hub_env": [
       "CI_LLM_BASE_URL",

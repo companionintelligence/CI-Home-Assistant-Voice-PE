@@ -41,6 +41,21 @@ test('adds gtag.js to every page, once', () => {
   assert.match(readFileSync(join(dir, 'ga-init.js'), 'utf8'), /gtag\('config', 'G-TEST123'\)/);
 });
 
+test('the init script is deferred and the markup stays idempotent', () => {
+  const dir = copyPublic();
+  inject(dir, 'G-TEST123');
+  const once = readFileSync(join(dir, 'index.html'), 'utf8');
+  inject(dir, 'G-TEST123');
+  assert.equal(readFileSync(join(dir, 'index.html'), 'utf8'), once);
+  assert.match(once, /<script defer src="\/ga-init\.js"><\/script>/);
+  assert.equal(once.split('<!-- ga4 -->').length, 2);
+});
+
+test('outbound links send the origin as referrer, so ci.computer can see where visits come from', () => {
+  const headers = readFileSync(new URL('../public/_headers', import.meta.url), 'utf8');
+  assert.match(headers, /^\s+Referrer-Policy: strict-origin-when-cross-origin$/m);
+});
+
 test('CSP allows Google Analytics', () => {
   const csp = readFileSync(new URL('../public/_headers', import.meta.url), 'utf8');
   assert.match(csp, /script-src 'self' https:\/\/www\.googletagmanager\.com/);

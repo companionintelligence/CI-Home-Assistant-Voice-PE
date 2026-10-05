@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Companion Voice for Home Assistant</title>
-  <meta name="description" content="Connect the Home Assistant Voice Preview Edition to a Companion that runs on your hardware and remembers what matters to you. Guided setup in about fifteen minutes.">
+  <meta name="description" content="Connect a Home Assistant Voice PE to a Companion that runs on your own hardware and remembers what matters to you. A guided setup, built in your browser.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#041620">
   <link rel="canonical" href="https://ha.ci.computer/">
@@ -21,33 +21,43 @@
   <meta name="twitter:title" content="Companion Voice for Home Assistant">
   <meta name="twitter:description" content="Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.">
   <meta name="twitter:image" content="https://ha.ci.computer/og.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://ci.computer/#organization","name":"Companion Intelligence","url":"https://ci.computer"},{"@type":"SoftwareApplication","@id":"https://ha.ci.computer/#software","name":"Companion Voice for Home Assistant","description":"Connect the Home Assistant Voice Preview Edition to a Companion that runs on your hardware and remembers what matters to you.","url":"https://ha.ci.computer/","applicationCategory":"UtilitiesApplication","operatingSystem":"macOS, Windows, Linux","publisher":{"@id":"https://ci.computer/#organization"}}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://ci.computer/#organization","name":"Companion Intelligence","url":"https://ci.computer","logo":"https://images.squarespace-cdn.com/content/v1/59f561340abd0485b3695a61/9b6b1c73-0838-44a2-87f1-4ca073ed2089/2024_CI__Logo_Banner_Light_med.png"},{"@type":"SoftwareApplication","@id":"https://ha.ci.computer/#software","name":"Companion Voice for Home Assistant","description":"Connect a Home Assistant Voice PE to a Companion that runs on your own hardware and remembers what matters to you. A guided setup, built in your browser.","url":"https://ha.ci.computer/","image":"https://ha.ci.computer/og.png","applicationCategory":"UtilitiesApplication","operatingSystem":"macOS, Windows, Linux","publisher":{"@id":"https://ci.computer/#organization"}}]}</script>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
   <link rel="preload" href="/fonts/manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/archivo-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="modulepreload" href="/config.js">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <a class="skip" href="#setup">Skip to setup</a>
+  <a class="skip" href="#main">Skip to main content</a>
+  <noscript><p class="noscript">The guided setup needs JavaScript: it builds your .env file and commands in the browser. You can still read the <a href="https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe">full guide</a>.</p></noscript>
 
   <header class="site-header">
     <div class="wrap header-row">
-      <a class="brand" href="/" aria-label="Companion Voice home">
-        <img src="/favicon.svg" alt="" width="30" height="30">
-        <span>Companion Voice</span>
-      </a>
+      <div class="header-id">
+        <a class="parent" href="https://ci.computer">Companion Intelligence</a>
+        <span class="crumb" aria-hidden="true">/</span>
+        <a class="brand" href="/" aria-label="Companion Voice home">
+          <img src="/favicon.svg" alt="" width="30" height="30">
+          <span>Companion Voice</span>
+        </a>
+      </div>
       <nav class="header-nav" aria-label="Page">
-        <a href="#how">How it works</a>
-        <a href="#setup">Set up</a>
-        <a href="#check">Check</a>
-        <a href="#help">Help</a>
+        <a class="nav-wide" href="#how">How it works</a>
+        <a class="nav-tiny" href="#setup">Set up</a>
+        <a class="nav-wide" href="#check">Check</a>
+        <a class="nav-mid" href="#help">Help</a>
+        <a href="https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe">Docs</a>
+        <a class="nav-cta" href="https://ci.computer/core">Buy Companion Core</a>
       </nav>
     </div>
   </header>
 
-  <main>
+  <main id="main" tabindex="-1">
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-copy">
@@ -55,14 +65,14 @@
           <h1 id="hero-title">Your voice assistant. <span>Your Companion.</span></h1>
           <p class="lede">
             Say the wake word and get an answer from a Companion that runs on your own computer,
-            knows your life from Companion Memory, and keeps every word inside your home.
+            knows your life from Companion Memory, and in the recommended setup keeps every word inside your home.
           </p>
           <div class="hero-actions">
             <a class="button primary" href="#setup">Set it up</a>
             <a class="button ghost-light" href="#how">How it works</a>
           </div>
           <ul class="hero-facts" aria-label="At a glance">
-            <li><strong>About 15 minutes</strong><span>from box to first answer</span></li>
+            <li><strong>Guided setup</strong><span>built in your browser, step by step</span></li>
             <li><strong>Runs locally</strong><span>on a Mac, PC or Linux box</span></li>
             <li><strong>Keeps your setup</strong><span>works with the Home Assistant you have</span></li>
           </ul>
@@ -102,15 +112,28 @@
             <circle cx="256" cy="256" r="52" fill="url(#pk-button)" stroke="#2a5d68" stroke-width="3"/>
             <circle cx="256" cy="256" r="9" fill="#c5e8dc"/>
           </svg>
-          <figcaption><span class="dot" aria-hidden="true"></span>Listening on Wyoming, TCP 10700</figcaption>
+          <figcaption><span class="dot" aria-hidden="true"></span>Talks to Home Assistant over Wyoming, TCP 10700</figcaption>
         </figure>
+      </div>
+    </section>
+
+    <section class="getit" aria-labelledby="getit-title">
+      <div class="wrap getit-row">
+        <div class="getit-copy">
+          <h2 id="getit-title">Don't have a Companion yet?</h2>
+          <p>Get a Companion Core, a personal AI appliance and local server, or download Companion Hub to turn a computer you already own into one.</p>
+        </div>
+        <div class="getit-actions">
+          <a class="button primary" href="https://ci.computer/core">Buy Companion Core</a>
+          <a class="button" href="https://ci.computer/download">Download Companion</a>
+        </div>
       </div>
     </section>
 
     <section class="how" id="how" aria-labelledby="how-title">
       <div class="wrap">
         <p class="eyebrow">How it works</p>
-        <h2 id="how-title">Three hops, all inside your home</h2>
+        <h2 id="how-title">Three hops, by default all inside your home</h2>
         <ol class="flow">
           <li>
             <span class="flow-no">1</span>
@@ -130,7 +153,8 @@
         </ol>
         <p class="aside">
           Keep Home Assistant's own Whisper and Piper for speech, or let Companion handle speech too.
-          Nothing leaves the house unless you pick cloud speech.
+          Nothing leaves the house unless you choose it: cloud speech sends audio to OpenAI,
+          and a model tag that starts with <code>openai:</code> sends your questions, and the memory an answer draws on, to OpenAI.
         </p>
       </div>
     </section>
@@ -141,10 +165,10 @@
           <div>
             <p class="eyebrow">Guided setup</p>
             <h2 id="setup-title">Set it up</h2>
-            <p class="section-intro">Everything below is built in your browser. Keys are generated here and never sent anywhere.</p>
+            <p class="section-intro">Everything below is built in your browser. Keys are generated here and are never sent to us. Prefer to read first? <a href="https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe">Read the full guide</a>.</p>
           </div>
-          <div class="progress" aria-live="polite">
-            <div class="progress-label"><span id="progress-text">0 of 7 done</span><button type="button" class="linklike" id="reset-progress">Start over</button></div>
+          <div class="progress">
+            <div class="progress-label"><span id="progress-text" aria-live="polite">0 of 7 done</span><button type="button" class="linklike" id="reset-progress">Start over</button></div>
             <div class="progress-bar"><span id="progress-fill"></span></div>
           </div>
         </div>
@@ -160,7 +184,7 @@
             <input type="radio" name="path" value="hub" id="path-hub">
             <span class="path-title">Companion Hub</span>
             <span class="path-text">Install from the Hub store. Hub supplies the model and connects your memory.</span>
-            <span class="badge muted">Rolling out</span>
+            <span class="badge">Available now</span>
           </label>
         </div>
 
@@ -169,7 +193,7 @@
           <li class="step" data-step="choose" data-path="docker">
             <div class="step-head">
               <h3>Choose your setup</h3>
-              <label class="done"><input type="checkbox" data-done="choose"> Done</label>
+              <label class="done"><input type="checkbox" data-done="choose" aria-label="Mark &quot;Choose your setup&quot; as done"> Done</label>
             </div>
             <div class="preset-row" role="radiogroup" aria-label="Setup">
               <label class="preset">
@@ -230,7 +254,7 @@
           <li class="step" data-step="memory" data-path="docker">
             <div class="step-head">
               <h3>Connect Companion Memory <span class="optional">Optional</span></h3>
-              <label class="done"><input type="checkbox" data-done="memory"> Done</label>
+              <label class="done"><input type="checkbox" data-done="memory" aria-label="Mark &quot;Connect Companion Memory&quot; as done"> Done</label>
             </div>
             <p>With memory connected, answers draw on what your Companion knows about you, and each exchange is saved as a conversation.</p>
             <label class="switch"><input type="checkbox" id="memory-on"> <span>Use Companion Memory</span></label>
@@ -254,7 +278,7 @@
           <li class="step" data-step="files" data-path="docker">
             <div class="step-head">
               <h3>Download your two files</h3>
-              <label class="done"><input type="checkbox" data-done="files"> Done</label>
+              <label class="done"><input type="checkbox" data-done="files" aria-label="Mark &quot;Download your two files&quot; as done"> Done</label>
             </div>
             <p>Put both in one empty folder on that computer, for example <code>companion-voice</code>.</p>
             <div class="download-row">
@@ -275,17 +299,17 @@
                     <button type="button" class="button small on-dark" id="regen">New keys</button>
                   </div>
                 </div>
-                <pre class="code" id="env-output" tabindex="0"></pre>
+                <pre class="code" id="env-output" tabindex="0" role="region" aria-label="Contents of the .env file"></pre>
               </div>
             </details>
-            <p class="hint">If the download arrives as env.txt or _env, rename it to .env.</p>
+            <p class="hint">If the download arrives as env.txt or _env, rename it to .env. The keys are made when this page loads, so download once and keep that file: reloading the page makes new keys that will not match a stack you already started.</p>
           </li>
 
           <!-- Docker: start -->
           <li class="step" data-step="start" data-path="docker">
             <div class="step-head">
               <h3>Start it</h3>
-              <label class="done"><input type="checkbox" data-done="start"> Done</label>
+              <label class="done"><input type="checkbox" data-done="start" aria-label="Mark &quot;Start it&quot; as done"> Done</label>
             </div>
             <p>Open a terminal in that folder and run:</p>
             <div class="file">
@@ -293,7 +317,7 @@
                 <span class="file-name">terminal</span>
                 <div class="file-actions"><button type="button" class="button small on-dark" id="copy-cmds">Copy</button></div>
               </div>
-              <pre class="code" id="cmd-output" tabindex="0"></pre>
+              <pre class="code" id="cmd-output" tabindex="0" role="region" aria-label="Terminal commands to start Companion Voice"></pre>
             </div>
             <p class="hint">The first start downloads the model, which can take a few minutes.</p>
           </li>
@@ -302,20 +326,21 @@
           <li class="step" data-step="hub-install" data-path="hub">
             <div class="step-head">
               <h3>Install from the Hub store</h3>
-              <label class="done"><input type="checkbox" data-done="hub-install"> Done</label>
+              <label class="done"><input type="checkbox" data-done="hub-install" aria-label="Mark &quot;Install from the Hub store&quot; as done"> Done</label>
             </div>
-            <p>Open your Companion Hub, find <strong>Home Assistant Voice</strong> in the store and install it. Hub connects it to the models it already runs.</p>
+            <p>New to Companion Hub? <a href="https://ci.computer/download">Download Companion</a> first, then come back here.</p>
+            <p>Open your Companion Hub, find <strong>Home Assistant Voice</strong> in the store (that is the name it has there) and install it. Hub connects it to the models it already runs.</p>
             <div class="button-row">
-              <a class="button primary" href="https://hub.ci.computer/install#ci-ha-voice">Open in Companion Hub</a>
+              <a class="button primary" href="https://hub.ci.computer/store/ci-ha-voice" target="_blank" rel="noopener noreferrer">View in the Hub store</a>
             </div>
-            <p class="hint">The listing is rolling out. If you do not see it yet, choose Docker above.</p>
+            <p class="hint">The listing is available now and needs Companion Hub 0.2.41 or newer. If you do not see it, check your Hub version, or choose Docker above.</p>
           </li>
 
           <!-- Hub: memory -->
           <li class="step" data-step="hub-memory" data-path="hub">
             <div class="step-head">
               <h3>Approve Companion Memory</h3>
-              <label class="done"><input type="checkbox" data-done="hub-memory"> Done</label>
+              <label class="done"><input type="checkbox" data-done="hub-memory" aria-label="Mark &quot;Approve Companion Memory&quot; as done"> Done</label>
             </div>
             <p>Hub asks you to approve a key for the app. It can only reach your memory, to recall and to save conversations. It cannot delete anything.</p>
           </li>
@@ -324,7 +349,7 @@
           <li class="step" data-step="ha" data-path="docker hub">
             <div class="step-head">
               <h3>Add it to Home Assistant</h3>
-              <label class="done"><input type="checkbox" data-done="ha"> Done</label>
+              <label class="done"><input type="checkbox" data-done="ha" aria-label="Mark &quot;Add it to Home Assistant&quot; as done"> Done</label>
             </div>
             <p>Add the Wyoming Protocol integration and enter:</p>
             <div class="values">
@@ -332,7 +357,7 @@
               <button type="button" class="value" id="copy-port"><span class="value-label">Port</span><span class="value-text">10700</span></button>
             </div>
             <div class="button-row">
-              <a class="button primary" href="https://my.home-assistant.io/redirect/config_flow_start/?domain=wyoming" rel="noopener">Open Home Assistant</a>
+              <a class="button primary" href="https://my.home-assistant.io/redirect/config_flow_start/?domain=wyoming" target="_blank" rel="noopener noreferrer">Open Home Assistant</a>
             </div>
             <p class="hint">Home Assistant then shows three services: companion-stt, companion-tts and companion-conversation.</p>
           </li>
@@ -341,7 +366,7 @@
           <li class="step" data-step="pipeline" data-path="docker hub">
             <div class="step-head">
               <h3>Give the Voice PE its assistant</h3>
-              <label class="done"><input type="checkbox" data-done="pipeline"> Done</label>
+              <label class="done"><input type="checkbox" data-done="pipeline" aria-label="Mark &quot;Give the Voice PE its assistant&quot; as done"> Done</label>
             </div>
             <p>In Voice assistants, add an assistant called Companion with these choices, then pick it on the Voice PE's device page.</p>
             <div class="table-scroll">
@@ -351,8 +376,8 @@
               </table>
             </div>
             <div class="button-row">
-              <a class="button primary" href="https://my.home-assistant.io/redirect/voice_assistants/" rel="noopener">Open Voice assistants</a>
-              <a class="button ghost" href="https://my.home-assistant.io/redirect/devices/" rel="noopener">Open Devices</a>
+              <a class="button primary" href="https://my.home-assistant.io/redirect/voice_assistants/" target="_blank" rel="noopener noreferrer">Open Voice assistants</a>
+              <a class="button ghost" href="https://my.home-assistant.io/redirect/devices/" target="_blank" rel="noopener noreferrer">Open Devices</a>
             </div>
           </li>
 
@@ -360,35 +385,41 @@
           <li class="step" data-step="check" data-path="docker hub" id="check">
             <div class="step-head">
               <h3>Check it</h3>
-              <label class="done"><input type="checkbox" data-done="check"> Done</label>
+              <label class="done"><input type="checkbox" data-done="check" aria-label="Mark &quot;Check it&quot; as done"> Done</label>
             </div>
-            <div class="check-grid">
-              <form class="check-form" id="check-form" novalidate>
-                <div class="field">
-                  <label for="serverUrl">ci-server address</label>
-                  <input id="serverUrl" name="serverUrl" type="url" placeholder="https://voice.your-tailnet.ts.net" autocomplete="off" spellcheck="false">
-                </div>
-                <div class="field">
-                  <label for="serverKey">MASTER_API_KEY</label>
-                  <input id="serverKey" name="serverKey" type="password" autocomplete="off" spellcheck="false">
-                  <p class="hint">From your .env, or the Voice API key on the Hub app page.</p>
-                </div>
-                <button type="submit" class="button primary" id="check-run">Run check</button>
-                <p class="notice" id="check-notice" role="status"></p>
-              </form>
-              <div class="check-results">
-                <ul class="results" id="check-results" aria-live="polite">
-                  <li class="result idle"><span class="pill">waiting</span><span class="result-label">Run the check to see each part.</span></li>
-                </ul>
-                <div class="file">
-                  <div class="file-head">
-                    <span class="file-name">or from any computer on your network</span>
-                    <div class="file-actions"><button type="button" class="button small on-dark" id="copy-curl">Copy</button></div>
+            <p>Run these two lines from any computer on your network. The first shows that ci-server is up, the second shows what it is connected to.</p>
+            <div class="file">
+              <div class="file-head">
+                <span class="file-name">from any computer on your network</span>
+                <div class="file-actions"><button type="button" class="button small on-dark" id="copy-curl">Copy</button></div>
+              </div>
+              <pre class="code" id="curl-output" tabindex="0" role="region" aria-label="Terminal commands to check ci-server"></pre>
+            </div>
+            <details class="peek check-browser">
+              <summary>Or check from this page</summary>
+              <p class="hint">This works when ci-server is reached over https (Tailscale Serve or a Cloudflare Tunnel both work) or runs on this computer. Browsers block a plain http address on your network, so use the commands above for that.</p>
+              <div class="check-grid">
+                <form class="check-form" id="check-form" novalidate>
+                  <div class="field">
+                    <label for="serverUrl">ci-server address</label>
+                    <input id="serverUrl" name="serverUrl" type="url" placeholder="https://voice.your-tailnet.ts.net" autocomplete="off" spellcheck="false" aria-describedby="serverUrl-hint">
+                    <p class="hint" id="serverUrl-hint">An https address, or localhost.</p>
                   </div>
-                  <pre class="code" id="curl-output" tabindex="0"></pre>
+                  <div class="field">
+                    <label for="serverKey">MASTER_API_KEY</label>
+                    <input id="serverKey" name="serverKey" type="password" autocomplete="off" spellcheck="false">
+                    <p class="hint">From your .env, or the Voice API key on the Hub app page. It goes only to the address above.</p>
+                  </div>
+                  <button type="submit" class="button primary" id="check-run">Run check</button>
+                  <p class="notice" id="check-notice" role="status"></p>
+                </form>
+                <div class="check-results">
+                  <ul class="results" id="check-results" aria-live="polite">
+                    <li class="result idle"><span class="pill">waiting</span><span class="result-label">Run the check to see each part.</span></li>
+                  </ul>
                 </div>
               </div>
-            </div>
+            </details>
             <p class="finale">Then say the wake word and ask something only your Companion would know.</p>
           </li>
         </ol>
@@ -427,8 +458,20 @@
 
   <footer class="site-footer">
     <div class="wrap footer-row">
-      <p>Companion Voice is part of <a href="https://ci.computer">Companion Intelligence</a>. Free for personal and nonprofit use under the PolyForm Noncommercial License.</p>
-      <p class="footer-links"><a href="https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe">Docs</a><a href="https://ci.computer/hub">Companion Hub</a><a href="https://www.home-assistant.io/voice-pe/">About Voice PE</a></p>
+      <p class="footer-lead">Companion Voice is part of <a href="https://ci.computer">Companion Intelligence</a>. Free for personal and nonprofit use under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial License</a>. Questions about the license? Email <a href="mailto:support@companionintelligence.com">support@companionintelligence.com</a>.</p>
+      <nav aria-label="Companion Intelligence">
+        <ul class="footer-links">
+          <li><a href="https://ci.computer">Companion Intelligence</a></li>
+          <li><a href="https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe">Docs</a></li>
+          <li><a href="https://ci.computer/hub">Companion Hub</a></li>
+          <li><a href="https://ci.computer/core">Buy Companion Core</a></li>
+          <li><a href="https://ci.computer/download">Download Companion</a></li>
+          <li><a href="https://www.home-assistant.io/voice-pe/">About Voice PE</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="wrap footer-fine">
+      <p>This site uses Google Analytics to count visits. The keys you type or generate here stay in your browser and are not sent to us; the check on this page sends your MASTER_API_KEY only to the ci-server address you enter. <a href="https://ci.computer/privacy-policy">Privacy policy</a></p>
     </div>
   </footer>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>

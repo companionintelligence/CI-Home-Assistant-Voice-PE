@@ -26,7 +26,8 @@ export const SPEECH_OPTIONS = {
   },
 };
 
-export const HUB_INSTALL_URL = 'https://hub.ci.computer/install#ci-ha-voice';
+// The public store listing of the app (id ci-ha-voice in CI-Marketplace).
+export const HUB_INSTALL_URL = 'https://hub.ci.computer/store/ci-ha-voice';
 
 // My Home Assistant redirects open the viewer's own Home Assistant on the right screen.
 export const HA_LINKS = {
@@ -40,7 +41,7 @@ export const MODEL_CHOICES = [
   { id: 'ollama:llama3.2', label: 'Llama 3.2, 3B', note: 'Smallest and fastest. A good first choice.' },
   { id: 'ollama:gemma3:4b', label: 'Gemma 3, 4B', note: 'Natural phrasing, still quick.' },
   { id: 'ollama:llama3.1:8b', label: 'Llama 3.1, 8B', note: 'Better answers. Needs more memory and a faster machine.' },
-  { id: 'custom', label: 'Something else', note: 'Enter any Ollama, OpenAI or vLLM model tag under More options.' },
+  { id: 'custom', label: 'Something else', note: 'Enter any Ollama, OpenAI or vLLM model tag under More options. An openai: tag sends your questions, and the memory an answer draws on, to OpenAI.' },
 ];
 
 // The steps each path walks through, in order.
@@ -182,7 +183,7 @@ export function buildEnv(options, secrets) {
     );
   }
 
-  lines.push('# Lets the checker at https://ha.ci.computer reach this server', 'CORS_ORIGINS=*', '');
+  lines.push('# Lets the checker at https://ha.ci.computer reach this server (and no other web page)', `CORS_ORIGINS=${SITE_URL}`, '');
   return lines.join('\n');
 }
 

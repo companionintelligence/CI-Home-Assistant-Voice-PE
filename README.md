@@ -139,7 +139,7 @@ The Hub listing (`ci-ha-voice` in CI-Marketplace) needs no `.env`:
 | `SYSTEM_INSTRUCTIONS` | concise assistant | bridge |
 | `HISTORY_TURNS`, `HISTORY_TTL_S` | `6`, `300` | bridge (follow-up context) |
 | `WYOMING_ZEROCONF` | `false` | bridge |
-| `CORS_ORIGINS` | `*` | ci-server (the ha.ci.computer checker needs it) |
+| `CORS_ORIGINS` | `*` | ci-server (the ha.ci.computer checker needs it; the .env the setup page writes narrows it to `https://ha.ci.computer`) |
 
 ## API
 

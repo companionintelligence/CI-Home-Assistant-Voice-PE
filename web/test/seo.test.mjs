@@ -32,8 +32,55 @@ test('og.png stays 1200x630 and under 300KB', () => {
 test('JSON-LD parses and names the organization and the app', () => {
   const m = read('index.html').match(/<script type="application\/ld\+json">(.*?)<\/script>/s);
   const g = JSON.parse(m[1])['@graph'];
-  assert.equal(g.find((n) => n['@type'] === 'Organization').url, 'https://ci.computer');
-  assert.equal(g.find((n) => n['@type'] === 'SoftwareApplication').url, 'https://ha.ci.computer/');
+  const org = g.find((n) => n['@type'] === 'Organization');
+  const app = g.find((n) => n['@type'] === 'SoftwareApplication');
+  assert.equal(org.url, 'https://ci.computer');
+  assert.match(org.logo, /^https:\/\//);
+  assert.equal(app.url, 'https://ha.ci.computer/');
+  assert.equal(app.image, 'https://ha.ci.computer/og.png');
+  assert.deepEqual(app.publisher, { '@id': org['@id'] }, 'the publisher reference resolves inside the graph');
+  assert.equal(app.description, read('index.html').match(/<meta name="description" content="([^"]+)">/)[1]);
+});
+
+test('the meta description fits a search result (about 155 characters)', () => {
+  for (const f of pages) {
+    const d = read(f).match(/<meta name="description" content="([^"]+)">/)[1];
+    assert.ok(d.length >= 40 && d.length <= 158, `${f}: ${d.length} characters`);
+  }
+});
+
+test('every page carries the same theme, color scheme and icon links', () => {
+  for (const f of pages) {
+    const h = read(f);
+    assert.match(h, /<meta name="color-scheme" content="light dark">/, f);
+    assert.match(h, /<meta name="theme-color" content="#041620">/, f);
+    assert.match(h, /<link rel="icon" href="\/favicon\.ico" sizes="32x32">/, f);
+    assert.match(h, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/, f);
+    assert.match(h, /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png">/, f);
+    assert.match(h, /<link rel="manifest" href="\/site\.webmanifest">/, f);
+    assert.match(h, /property="og:image:width" content="1200"/, f);
+    assert.match(h, /property="og:image:height" content="630"/, f);
+    assert.match(h, /property="og:image:alt" content="[^"]{10,}"/, f);
+  }
+});
+
+test('the web manifest and icons exist and are the sizes they claim', () => {
+  const manifest = JSON.parse(read('site.webmanifest'));
+  assert.equal(manifest.start_url, '/');
+  assert.equal(manifest.theme_color, '#041620');
+  assert.ok(manifest.name.length > 0 && manifest.short_name.length > 0);
+  const png = manifest.icons.filter((i) => i.type === 'image/png');
+  assert.deepEqual(png.map((i) => i.sizes).sort(), ['192x192', '512x512']);
+  for (const icon of manifest.icons) {
+    const file = readFileSync(new URL(icon.src.slice(1), pub));
+    if (icon.type === 'image/png') {
+      const [w, h] = icon.sizes.split('x').map(Number);
+      assert.equal(file.readUInt32BE(16), w, icon.src);
+      assert.equal(file.readUInt32BE(20), h, icon.src);
+    }
+  }
+  const ico = readFileSync(new URL('favicon.ico', pub));
+  assert.deepEqual([ico.readUInt16LE(0), ico.readUInt16LE(2)], [0, 1], 'favicon.ico has an ICO header');
 });
 
 test('robots.txt points at the sitemap, which lists the canonical page', () => {
