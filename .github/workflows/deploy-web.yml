@@ -57,6 +57,11 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm test
+      - name: Add Google Analytics
+        # No-op unless the repo variable GA_MEASUREMENT_ID is set to a G-XXXX id.
+        env:
+          GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
+        run: node scripts/inject-analytics.mjs
       - name: Deploy
         if: steps.secrets.outputs.ready == 'true'
         env:

@@ -96,3 +96,15 @@ gh workflow run publish-images.yml --repo companionintelligence/CI-Home-Assistan
 
 Then, for each package, open its **Package settings** on GitHub and set
 **Change visibility** to public.
+
+## Analytics (optional)
+
+The deploy workflow adds Google Analytics 4 to every page when the repository
+variable `GA_MEASUREMENT_ID` is set (format `G-XXXXXXXX`); unset or malformed
+means nothing is emitted. `scripts/inject-analytics.mjs` does the injection at
+deploy time, and the CSP in `public/_headers` allows googletagmanager.com and
+google-analytics.com.
+
+```bash
+gh variable set GA_MEASUREMENT_ID --body G-XXXX --repo companionintelligence/CI-Home-Assistant-Voice-PE
+```
