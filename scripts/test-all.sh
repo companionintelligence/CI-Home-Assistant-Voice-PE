@@ -24,7 +24,7 @@ step "web: setup page logic, compose drift, wrangler dry run"
 
 if command -v docker >/dev/null 2>&1; then
   step "compose files parse"
-  printf 'MASTER_API_KEY=x\nPOSTGRES_PASSWORD=x\n' > /tmp/ci-ha-voice.env
+  printf 'MASTER_API_KEY=x\nPOSTGRES_PASSWORD=x\nJWT_SECRET=x\n' > /tmp/ci-ha-voice.env
   docker compose --env-file /tmp/ci-ha-voice.env config --quiet
   docker compose --env-file /tmp/ci-ha-voice.env -f web/public/compose.yml config --quiet
 fi

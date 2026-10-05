@@ -98,6 +98,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: printf 'MASTER_API_KEY=x\nPOSTGRES_PASSWORD=x\n' > ci.env
+      - run: printf 'MASTER_API_KEY=x\nPOSTGRES_PASSWORD=x\nJWT_SECRET=x\n' > ci.env
       - run: docker compose --env-file ci.env config --quiet
       - run: docker compose --env-file ci.env -f web/public/compose.yml config --quiet

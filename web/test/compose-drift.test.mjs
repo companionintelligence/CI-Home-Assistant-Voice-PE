@@ -32,3 +32,23 @@ test('speaches profile matches', () => {
   assert.deepEqual(release.services.speaches.profiles, repo.services.speaches.profiles);
   assert.equal(release.services.speaches.image, repo.services.speaches.image);
 });
+
+// Variables written as ${NAME:?message} make `docker compose config` fail when the
+// env file lacks them. CI and scripts/test-all.sh both build a throwaway env file
+// and run `config` against both compose files, so that file must name every one.
+test('the throwaway env file in CI and test-all.sh sets every required compose variable', async () => {
+  const text = (path) => readFile(new URL(path, import.meta.url), 'utf8');
+  const required = new Set();
+  for (const file of ['../public/compose.yml', '../../docker-compose.yml']) {
+    for (const m of (await text(file)).matchAll(/\$\{(\w+):\?/g)) required.add(m[1]);
+  }
+  assert.ok(required.size > 0, 'expected at least one required variable (JWT_SECRET)');
+  for (const file of ['../../.github/workflows/ci.yml', '../../scripts/test-all.sh']) {
+    const printf = (await text(file)).match(/printf '([^']*MASTER_API_KEY[^']*)'/);
+    assert.ok(printf, `${file} builds no env file`);
+    const keys = printf[1].split('\\n').filter(Boolean).map((line) => line.split('=')[0]);
+    for (const name of required) {
+      assert.ok(keys.includes(name), `${file} builds an env file without ${name}`);
+    }
+  }
+});

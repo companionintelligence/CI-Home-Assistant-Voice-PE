@@ -148,3 +148,15 @@ test('index.html: privacy claims are qualified and the license line links the li
   assert.ok(hrefs(html).includes('https://polyformproject.org/licenses/noncommercial/1.0.0'));
   assert.ok(hrefs(html).includes('mailto:support@companionintelligence.com'));
 });
+
+// The header keeps its Buy Companion Core link on every screen size. The nav may
+// drop other links on a small screen, but the stylesheet must never hide the CTA,
+// or phone visitors have no way to buy above the fold.
+test('styles.css never hides the header Buy link', () => {
+  const css = readFileSync(new URL('styles.css', pub), 'utf8');
+  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (/\bnav-cta\b/.test(rule[1])) {
+      assert.doesNotMatch(rule[2], /display\s*:\s*none/, `"${rule[1].trim()}" hides the Buy link`);
+    }
+  }
+});
