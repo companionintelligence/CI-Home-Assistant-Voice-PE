@@ -12,12 +12,16 @@ name: Deploy ha.ci.computer
 # Without them the job skips with a notice instead of failing, so deploying
 # from the Cloudflare dashboard (Workers Builds) works on its own too.
 # See web/README.md.
+# >>> ci-local:gated original triggers below, restore with `ci-local restore`
+# on:
+#   push:
+#     branches: [main]
+#     paths:
+#       - "web/**"
+#       - ".github/workflows/deploy-web.yml"
+#   workflow_dispatch:
+# <<< ci-local:gated
 on:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 
 permissions:
