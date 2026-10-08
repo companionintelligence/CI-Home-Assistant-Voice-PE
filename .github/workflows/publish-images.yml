@@ -13,9 +13,18 @@ name: Publish images
 #
 # After the first publish, set both packages' visibility to public in the
 # organization's package settings so people and Hub can pull them without a login.
+# >>> ci-local:gated original triggers below, restore with `ci-local restore`
+# on:
+#   push:
+#     tags: ["v*"]
+#   workflow_dispatch:
+#     inputs:
+#       dry_run:
+#         description: "Build both images but do not push them (default false, so a plain dispatch publishes)"
+#         type: boolean
+#         default: false
+# <<< ci-local:gated
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
     inputs:
       dry_run:
