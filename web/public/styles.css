@@ -268,7 +268,7 @@ p { margin: 0; }
 .aside { margin-top: 22px; color: var(--muted-foreground); max-width: 62ch; }
 
 /* ── Setup ───────────────────────────────────────────────────────────────── */
-.setup { padding-block: clamp(56px, 8vw, 96px); background: var(--surface-2); border-block: 1px solid var(--border); }
+.setup { padding-block: clamp(56px, 8vw, 96px); background: var(--ci-bg-deep, #021018); border-block: 1px solid var(--border); }
 .setup-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
 .section-intro { margin-top: 12px; color: var(--muted-foreground); max-width: 60ch; }
 .progress { min-width: min(100%, 280px); display: grid; gap: 8px; }
