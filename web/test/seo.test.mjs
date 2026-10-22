@@ -52,7 +52,7 @@ test('the meta description fits a search result (about 155 characters)', () => {
 test('every page carries the same theme, color scheme and icon links', () => {
   for (const f of pages) {
     const h = read(f);
-    assert.match(h, /<meta name="color-scheme" content="light dark">/, f);
+    assert.match(h, /<meta name="color-scheme" content="dark">/, f);
     assert.match(h, /<meta name="theme-color" content="#041620">/, f);
     assert.match(h, /<link rel="icon" href="\/favicon\.ico" sizes="32x32">/, f);
     assert.match(h, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/, f);
