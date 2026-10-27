@@ -210,6 +210,28 @@ Hosted CI is gated, as across the organization. Dispatch it when you want a run:
 | Speech-to-text returns nothing | With Companion speech, download the speaches models once. Otherwise pick faster-whisper and Piper in the assistant. |
 | Answers ignore my memory | The key needs the `memory` scope, and the URL must end in `/api` behind the Companion Memory gateway. `/v1/status` shows the exact error. |
 
+<!-- companion-hub-readme-deep-review -->
+
+## Deployment choices
+
+| Path | Best for |
+|---|---|
+| Source quick start | Local development and API iteration |
+| Companion Hub | Running the voice service as a managed Hub app |
+| Home Assistant integration | Connecting the voice pipeline to a Home Assistant installation |
+
+```mermaid
+flowchart LR
+  Voice[Voice input] --> Service[Voice PE service]
+  Service --> STT[Speech recognition]
+  STT --> Assistant[Configured assistant or memory backend]
+  Assistant --> TTS[Speech synthesis]
+  TTS --> Voice
+  Service <--> HA[Home Assistant API]
+```
+
+Choose one deployment path and use its corresponding configuration section. For networked deployments, protect the Home Assistant token and service endpoints as credentials.
+
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE.md). See [NOTICE.md](NOTICE.md),
