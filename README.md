@@ -2,12 +2,13 @@
 
 <img src="web/public/icon.svg" alt="Companion Voice icon: a Home Assistant Voice PE seen from above, its light ring listening" width="112" height="112">
 
-# Companion Voice for Home Assistant
+<h1 align="center">Companion Voice for Home Assistant</h1>
 
-**Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.**
+<p align="center"><strong>Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.</strong></p>
 
-[Setup guide](https://ha.ci.computer) ·
-[Docs](https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe) ·
+<p align="center"><a href="https://ha.ci.computer">Website</a> · <a href="#choose-your-path">Get started</a> · <a href="#license">License</a></p>
+
+
 [Companion Hub](https://ci.computer/hub) ·
 [Voice PE hardware](https://www.home-assistant.io/voice-pe/)
 
