@@ -6,7 +6,7 @@
 
 <p align="center"><strong>Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.</strong></p>
 
-<p align="center"><a href="https://ha.ci.computer">Website</a> · <a href="#choose-your-path">Get started</a> · <a href="#license">License</a></p>
+<p align="center"><a href="https://ha.ci.computer">Website</a> · <a href="#choose-your-path">Get started</a> · <a href="#license">License</a> · <a href="https://docs.ci.computer/docs/reference/open-source-systems">Systems map</a></p>
 
 
 [Companion Hub](https://ci.computer/hub) ·
