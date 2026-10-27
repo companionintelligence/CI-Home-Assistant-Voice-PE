@@ -2,16 +2,25 @@
 
 <img src="web/public/icon.svg" alt="Companion Voice icon: a Home Assistant Voice PE seen from above, its light ring listening" width="112" height="112">
 
-# Companion Voice for Home Assistant
+<h1 align="center">Companion Voice for Home Assistant</h1>
 
-**Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.**
-
-[Setup guide](https://ha.ci.computer) ·
-[Docs](https://docs.ci.computer/docs/apps-available/first-party-apps/home-assistant-voice-pe) ·
-[Companion Hub](https://ci.computer/hub) ·
-[Voice PE hardware](https://www.home-assistant.io/voice-pe/)
+<p align="center"><strong>Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.</strong></p>
 
 </div>
+
+[![release](https://img.shields.io/badge/release-not%20published-757575?style=flat-square)](https://github.com/companionintelligence/CI-Home-Assistant-Voice-PE/releases)
+[![platform](https://img.shields.io/badge/platform-Home%20Assistant%20%C2%B7%20Docker-0a6358?style=flat-square)](https://github.com/companionintelligence/CI-Home-Assistant-Voice-PE)
+[![License](https://img.shields.io/badge/license-PolyForm%20NC%201.0-0a6358?style=flat-square)](LICENSE.md)
+[![Discord](https://img.shields.io/badge/chat-Discord-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/invite/yQp9hwpzAa)
+
+<p align="center"><a href="https://ha.ci.computer">Website</a> · <a href="#choose-your-path">Get started</a> · <a href="#license">License</a> · <a href="README.md#quick-start">Documentation</a> · <a href="https://docs.ci.computer/docs/reference/open-source-systems">Systems map</a></p>
+
+<p align="center">
+  <a href="https://ha.ci.computer"><img src="https://img.shields.io/badge/Open%20setup%20guide-Open%20setup%20guide-0a6358?style=for-the-badge&logo=homeassistant&logoColor=white" alt="Open setup guide" height="30"></a>
+</p>
+
+[Companion Hub](https://ci.computer/hub) ·
+[Voice PE hardware](https://www.home-assistant.io/voice-pe/)
 
 ---
 
@@ -39,6 +48,21 @@ Whichever you pick, finish in Home Assistant:
 2. In [Voice assistants](https://my.home-assistant.io/redirect/voice_assistants/), add an assistant with `companion-conversation` as its conversation agent.
 3. On the Voice PE's device page, set **Assistant** to it and ask it something only your Companion would know.
 
+
+## How it fits together
+
+Home Assistant Assist calls Wyoming services in the bridge, the OpenAI-compatible facade selects inference and optional speech services, and Memory adds context when configured.
+
+```mermaid
+flowchart LR
+  Voice[Home Assistant Voice PE] --> Assist[Home Assistant Assist]
+  Assist --> Bridge[Wyoming bridge]
+  Bridge --> Facade[OpenAI-compatible facade]
+  Facade --> Models[Hub or configured inference]
+  Facade --> Speech[Optional STT/TTS]
+  Facade <--> Memory[Companion Memory]
+```
+
 ## How it works
 
 ```mermaid
@@ -62,6 +86,17 @@ turns its three services into entities that make up a full Assist pipeline:
 
 The simplest setup uses only `companion-conversation` and keeps Home Assistant's
 faster-whisper and Piper add-ons for speech.
+
+
+## Features
+
+| Feature | What it provides |
+|---|---|
+| **Wyoming voice bridge** | Expose conversation, speech-to-text and text-to-speech services to Assist. |
+| **OpenAI-compatible facade** | Route requests to Hub, local or configured remote inference. |
+| **Optional Memory context** | Use Companion Memory for recall and turn context when configured. |
+| **Local audio profile** | Run local STT/TTS containers when the host has the required resources. |
+
 
 ## Quick start from source
 
@@ -208,6 +243,28 @@ Hosted CI is gated, as across the organization. Dispatch it when you want a run:
 | The Voice PE lights up but never answers | Run `curl -H "Authorization: Bearer $MASTER_API_KEY" http://<host>:8080/v1/status`. A failing `llm` usually means the model is not pulled yet. |
 | Speech-to-text returns nothing | With Companion speech, download the speaches models once. Otherwise pick faster-whisper and Piper in the assistant. |
 | Answers ignore my memory | The key needs the `memory` scope, and the URL must end in `/api` behind the Companion Memory gateway. `/v1/status` shows the exact error. |
+
+<!-- companion-hub-readme-deep-review -->
+
+## Deployment choices
+
+| Path | Best for |
+|---|---|
+| Source quick start | Local development and API iteration |
+| Companion Hub | Running the voice service as a managed Hub app |
+| Home Assistant integration | Connecting the voice pipeline to a Home Assistant installation |
+
+```mermaid
+flowchart LR
+  Voice[Voice input] --> Service[Voice PE service]
+  Service --> STT[Speech recognition]
+  STT --> Assistant[Configured assistant or memory backend]
+  Assistant --> TTS[Speech synthesis]
+  TTS --> Voice
+  Service <--> HA[Home Assistant API]
+```
+
+Choose one deployment path and use its corresponding configuration section. For networked deployments, protect the Home Assistant token and service endpoints as credentials.
 
 ## License
 
