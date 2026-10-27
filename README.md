@@ -6,13 +6,21 @@
 
 <p align="center"><strong>Your Voice PE, answered by a Companion that runs on your hardware and remembers what matters to you.</strong></p>
 
-<p align="center"><a href="https://ha.ci.computer">Website</a> · <a href="#choose-your-path">Get started</a> · <a href="#license">License</a> · <a href="https://docs.ci.computer/docs/reference/open-source-systems">Systems map</a></p>
+</div>
 
+[![release](https://img.shields.io/badge/release-not%20published-757575?style=flat-square)](https://github.com/companionintelligence/CI-Home-Assistant-Voice-PE/releases)
+[![platform](https://img.shields.io/badge/platform-Home%20Assistant%20%C2%B7%20Docker-0a6358?style=flat-square)](https://github.com/companionintelligence/CI-Home-Assistant-Voice-PE)
+[![License](https://img.shields.io/badge/license-PolyForm%20NC%201.0-0a6358?style=flat-square)](LICENSE.md)
+[![Discord](https://img.shields.io/badge/chat-Discord-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.com/invite/yQp9hwpzAa)
+
+<p align="center"><a href="https://ha.ci.computer">Website</a> · <a href="#choose-your-path">Get started</a> · <a href="#license">License</a> · <a href="README.md#quick-start">Documentation</a> · <a href="https://docs.ci.computer/docs/reference/open-source-systems">Systems map</a></p>
+
+<p align="center">
+  <a href="https://ha.ci.computer"><img src="https://img.shields.io/badge/Open%20setup%20guide-Open%20setup%20guide-0a6358?style=for-the-badge&logo=homeassistant&logoColor=white" alt="Open setup guide" height="30"></a>
+</p>
 
 [Companion Hub](https://ci.computer/hub) ·
 [Voice PE hardware](https://www.home-assistant.io/voice-pe/)
-
-</div>
 
 ---
 
@@ -40,6 +48,21 @@ Whichever you pick, finish in Home Assistant:
 2. In [Voice assistants](https://my.home-assistant.io/redirect/voice_assistants/), add an assistant with `companion-conversation` as its conversation agent.
 3. On the Voice PE's device page, set **Assistant** to it and ask it something only your Companion would know.
 
+
+## How it fits together
+
+Home Assistant Assist calls Wyoming services in the bridge, the OpenAI-compatible facade selects inference and optional speech services, and Memory adds context when configured.
+
+```mermaid
+flowchart LR
+  Voice[Home Assistant Voice PE] --> Assist[Home Assistant Assist]
+  Assist --> Bridge[Wyoming bridge]
+  Bridge --> Facade[OpenAI-compatible facade]
+  Facade --> Models[Hub or configured inference]
+  Facade --> Speech[Optional STT/TTS]
+  Facade <--> Memory[Companion Memory]
+```
+
 ## How it works
 
 ```mermaid
@@ -63,6 +86,17 @@ turns its three services into entities that make up a full Assist pipeline:
 
 The simplest setup uses only `companion-conversation` and keeps Home Assistant's
 faster-whisper and Piper add-ons for speech.
+
+
+## Features
+
+| Feature | What it provides |
+|---|---|
+| **Wyoming voice bridge** | Expose conversation, speech-to-text and text-to-speech services to Assist. |
+| **OpenAI-compatible facade** | Route requests to Hub, local or configured remote inference. |
+| **Optional Memory context** | Use Companion Memory for recall and turn context when configured. |
+| **Local audio profile** | Run local STT/TTS containers when the host has the required resources. |
+
 
 ## Quick start from source
 
