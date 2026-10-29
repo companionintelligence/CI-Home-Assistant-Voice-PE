@@ -43,7 +43,7 @@ In order. Each line is also a quick-add task (see the script at the end).
 - **Wyoming over TCP, not WebSocket.** Home Assistant's Wyoming integration only speaks TCP, so the old bridge could not be added at all. The bridge now uses the official `wyoming` library.
 - **Conversation agent first.** The fastest working setup keeps Home Assistant's own Whisper and Piper and uses Companion only for answers. Companion speech is optional.
 - **Memory with the smallest key.** Voice gets the `memory` scope at `write`, the same shape as the Mentra bridge. It can recall and save, but it cannot delete.
-- **Public site, private repo.** ha.ci.computer serves its own `compose.yml` that pulls published images, so nobody needs access to the repository.
+- **Public site, public repo.** ha.ci.computer serves its own `compose.yml` that pulls published images, so nobody needs access to the repository.
 - **Gated CI.** Following the org rule, hosted CI runs only on dispatch. The one exception is the site deploy, which takes about a minute.
 
 ## Blocked in the cloud session
