@@ -1,0 +1,104 @@
+{
+  "$schema": "https://raw.githubusercontent.com/companionintelligence/CI-Common/main/packages/video-kit/schema/storyboard.schema.json",
+  "app": {
+    "id": "ci-home-assistant-voice-pe",
+    "name": "Companion Voice for Home Assistant",
+    "repo": "companionintelligence/CI-Home-Assistant-Voice-PE",
+    "website": "ci.computer"
+  },
+  "meta": {
+    "fps": 30,
+    "transitionSeconds": 0.5,
+    "pacing": "fit",
+    "label": "Storyboard draft. No device footage.",
+    "posterFirst": true,
+    "subtitles": "sidecar"
+  },
+  "chapters": {
+    "voice": "The voice path",
+    "yours": "Your choices"
+  },
+  "scenes": [
+    {
+      "id": "open",
+      "kind": "intro",
+      "seconds": 5,
+      "minSeconds": 5,
+      "title": "Companion Voice for Home Assistant",
+      "caption": "Your Voice PE, answered by a Companion you own.",
+      "narration": "Your Home Assistant Voice PE, answered by a Companion that runs on your hardware.",
+      "mark": "./assets/app-icon.png"
+    },
+    {
+      "id": "local",
+      "kind": "feature",
+      "seconds": 5,
+      "minSeconds": 5,
+      "title": "Say the wake word. The answer stays home.",
+      "caption": "A local model, grounded in your Companion Memory.",
+      "narration": "Say the wake word and the answer comes from a local model, grounded in your Companion Memory, with every word staying in your home.",
+      "chapter": "voice"
+    },
+    {
+      "id": "fits",
+      "kind": "feature",
+      "seconds": 8,
+      "minSeconds": 8,
+      "title": "It plugs into the Assist you already run.",
+      "caption": "Standard Wyoming integration. No custom component.",
+      "narration": "It plugs into Home Assistant Assist through the standard Wyoming integration, and needs no custom component.",
+      "chapter": "voice",
+      "items": [
+        {
+          "label": "Conversation",
+          "value": "companion-conversation"
+        },
+        {
+          "label": "Speech to text",
+          "value": "companion-stt"
+        },
+        {
+          "label": "Text to speech",
+          "value": "companion-tts"
+        }
+      ],
+      "reveal": "paced"
+    },
+    {
+      "id": "yours",
+      "kind": "feature",
+      "seconds": 8,
+      "minSeconds": 8,
+      "title": "Models and speech are your choice.",
+      "caption": "Ollama or any OpenAI-compatible model. Memory is optional.",
+      "narration": "Answers come from Ollama or any OpenAI-compatible model. Speech can stay with Home Assistant's own Whisper and Piper. Memory is optional.",
+      "chapter": "yours",
+      "items": [
+        {
+          "label": "Model",
+          "value": "Ollama or OpenAI-compatible"
+        },
+        {
+          "label": "Speech",
+          "value": "Whisper and Piper, or Companion's"
+        },
+        {
+          "label": "Memory",
+          "value": "Optional, memory-scoped key"
+        }
+      ],
+      "reveal": "paced"
+    },
+    {
+      "id": "close",
+      "kind": "outro",
+      "seconds": 6,
+      "minSeconds": 6,
+      "caption": "ha.ci.computer",
+      "cta": "Give your Voice PE a memory",
+      "tagline": "UnCloud your life.",
+      "url": "ha.ci.computer",
+      "narration": "Give your Voice PE a memory with Companion Voice. Visit h a dot ci dot computer. UnCloud your life."
+    }
+  ]
+}
