@@ -141,7 +141,7 @@ https://ha.ci.computer/compose.yml gets them only after someone publishes and pu
 ## Where to read more
 
 - [ADR-0001](decisions/0001-companion-intelligence-integration.md): the proposed
-  decisions, the freeze list and what may leave the private repository.
+  decisions, the freeze list and what may leave the repository.
 - [Rework plan](plans/2026-09-29-ha-integration-rework.md): phases, credentials,
   security and testing.
 - [Launch plan](plans/2026-09-28-ha-voice-launch.md): the voice launch checklist.

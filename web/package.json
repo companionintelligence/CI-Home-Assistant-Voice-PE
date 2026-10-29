@@ -1,6 +1,7 @@
 {
   "name": "ci-ha-voice-web",
   "version": "1.0.0",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "private": true,
   "description": "Setup site for Companion Voice for Home Assistant, served at https://ha.ci.computer",
   "type": "module",
