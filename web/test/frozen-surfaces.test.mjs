@@ -158,13 +158,116 @@ test('wyoming: zeroconf name companion-voice', async () => {
 
 // Images: what compose.yml and the Hub listing pull
 
+// What a workflow is designed to run on, which is not always its live `on:` block.
+// ci-local gates workflows to manual runs so pushes stop starting hosted ones. It
+// cuts the live block down to workflow_dispatch, keeps the original in a comment
+// between two marker lines (local_ci/workflows.py in CI-Local-CICD) and puts it
+// back on `ci-local restore`:
+//
+//   # >>> ci-local:gated original triggers below, restore with `ci-local restore`
+//   # on:
+//   #   push:
+//   #     tags: ["v*"]
+//   # <<< ci-local:gated
+//   on:
+//     workflow_dispatch:
+//
+// So read the comment when the file is gated and the live block when it is not.
+// The answer is the same before and after a restore, and it still changes when the
+// design does.
+const GATE_BEGIN = '# >>> ci-local:gated';
+const GATE_END = '# <<< ci-local:gated';
+
+function intendedTriggers(source) {
+  const lines = source.split(/\r?\n/);
+  // As in ci-local, a marker is a line that starts with it, so a comment that
+  // only mentions the markers is not a gate.
+  const find = (marker, from) => lines.findIndex((line, i) => i >= from && line.trim().startsWith(marker));
+  const begin = find(GATE_BEGIN, 0);
+  const end = find(GATE_END, begin + 1);
+  if ((begin === -1) !== (end === -1)) throw new Error(`a ${GATE_BEGIN} line needs a matching ${GATE_END} line`);
+
+  const gated = begin !== -1;
+  // ci-local comments each line out with "# ", or a bare "#" for a blank one.
+  const block = gated ? lines.slice(begin + 1, end).map((line) => line.replace(/^\s*# ?/, '')).join('\n') : source;
+  const on = parse(block)?.on;
+  if (on == null) throw new Error(`no on: block in ${gated ? 'its ci-local:gated comment' : 'the workflow'}`);
+  return on;
+}
+
+// A workflow as `ci-local gate` writes it, and the same workflow after `ci-local restore`.
+const RESTORED = `name: Publish images
+on:
+  push:
+    tags: ["v*"]
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        type: boolean
+        default: false
+jobs: {}
+`;
+
+const GATED = `name: Publish images
+# >>> ci-local:gated original triggers below, restore with \`ci-local restore\`
+# on:
+#   push:
+#     tags: ["v*"]
+#
+#   workflow_dispatch:
+#     inputs:
+#       dry_run:
+#         type: boolean
+#         default: false
+# <<< ci-local:gated
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        type: boolean
+        default: false
+jobs: {}
+`;
+
+test('workflow triggers: a gated and a restored workflow give the same design', () => {
+  const design = {
+    push: { tags: ['v*'] },
+    workflow_dispatch: { inputs: { dry_run: { type: 'boolean', default: false } } },
+  };
+  assert.deepEqual(intendedTriggers(GATED), design);
+  assert.deepEqual(intendedTriggers(RESTORED), design);
+});
+
+test('workflow triggers: a change to the design shows in a gated and in a restored workflow', () => {
+  for (const source of [GATED, RESTORED]) {
+    // The first match is in the comment block when gated and in the live block when restored.
+    const tags = intendedTriggers(source.replace('tags: ["v*"]', 'tags: ["*"]'));
+    assert.deepEqual(tags.push, { tags: ['*'] });
+    const events = intendedTriggers(source.replace('workflow_dispatch:', 'pull_request:'));
+    assert.deepEqual(sorted(Object.keys(events)), ['pull_request', 'push']);
+  }
+  // Delete the markers but keep the comment, and only the live workflow_dispatch is left to read.
+  const unmarked = GATED.replace(/^# [<>]{3} ci-local:gated.*\n/gm, '');
+  assert.deepEqual(Object.keys(intendedTriggers(unmarked)), ['workflow_dispatch']);
+});
+
+test('workflow triggers: markers must pair up, and a comment that only mentions them is no gate', () => {
+  assert.throws(() => intendedTriggers(GATED.replace(/^# <<< ci-local:gated\n/m, '')), /needs a matching/);
+  assert.throws(() => intendedTriggers(GATED.replace(/^# >>> ci-local:gated.*\n/m, '')), /needs a matching/);
+  const mention = 'name: X\n# see `# >>> ci-local:gated` and `# <<< ci-local:gated`\non:\n  push:\n';
+  assert.deepEqual(Object.keys(intendedTriggers(mention)), ['push']);
+  assert.throws(() => intendedTriggers('name: X\n'), /no on: block in the workflow/);
+});
+
 async function publishWorkflow() {
-  const workflow = await yaml(frozen.images.workflow);
+  const source = await text(frozen.images.workflow);
+  const workflow = parse(source);
   const steps = workflow.jobs.publish.steps;
   const meta = steps.find((step) => step.id === 'meta');
   const build = steps.find((step) => String(step.uses).startsWith('docker/build-push-action@'));
   const tagLines = String(meta.with.tags).split('\n').map((line) => line.trim()).filter(Boolean);
-  return { workflow, job: workflow.jobs.publish, meta, build, tagLines };
+  return { source, workflow, job: workflow.jobs.publish, meta, build, tagLines };
 }
 
 test('publish-images: GHCR image names and matrix contexts', async () => {
@@ -187,9 +290,11 @@ test('publish-images: OCI labels title, vendor and url', async () => {
 });
 
 test('publish-images: runs only on v* tags and manual dispatch', async () => {
-  const { workflow } = await publishWorkflow();
-  assert.deepEqual(sorted(Object.keys(workflow.on)), ['push', 'workflow_dispatch']);
-  assert.deepEqual(workflow.on.push, { tags: frozen.images.tag_trigger });
+  // The design, not the live block: while ci-local has the workflow gated, that
+  // block holds workflow_dispatch alone.
+  const triggers = intendedTriggers((await publishWorkflow()).source);
+  assert.deepEqual(sorted(Object.keys(triggers)), ['push', 'workflow_dispatch']);
+  assert.deepEqual(triggers.push, { tags: frozen.images.tag_trigger });
 });
 
 test('publish-images: the semver and sha tag rules are unchanged', async () => {
